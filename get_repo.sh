@@ -3,6 +3,31 @@
 
 set -e
 
+normalize_runql_client_version() {
+  echo "${1#v}"
+}
+
+encode_runql_client_version() {
+  local version="$1"
+
+  if [[ ! "${version}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "Error: Bad RUNQL_CLIENT_VERSION: ${version}" >&2
+    exit 1
+  fi
+
+  printf "%02d%02d%02d" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
+}
+
+if [[ -z "${RUNQL_CLIENT_VERSION}" ]] && [[ -n "${RUNQL_CLIENT_TAG}" ]]; then
+  RUNQL_CLIENT_VERSION="$(normalize_runql_client_version "${RUNQL_CLIENT_TAG}")"
+fi
+
+RUNQL_CLIENT_SUFFIX=""
+
+if [[ -n "${RUNQL_CLIENT_VERSION}" ]]; then
+  RUNQL_CLIENT_SUFFIX="$(encode_runql_client_version "${RUNQL_CLIENT_VERSION}")"
+fi
+
 # git workaround
 if [[ "${CI_BUILD}" != "no" ]]; then
   git config --global --add safe.directory "/__w/$( echo "${GITHUB_REPOSITORY}" | awk '{print tolower($0)}' )"
@@ -30,15 +55,18 @@ if [[ -z "${RELEASE_VERSION}" ]]; then
   TIME_PATCH=$( printf "%04d" $(($(date +%-j) * 24 + $(date +%-H))) )
 
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
-    RELEASE_VERSION="${MS_TAG}${TIME_PATCH}-insider"
+    BASE_RELEASE_VERSION="${MS_TAG}${TIME_PATCH}"
+    RELEASE_VERSION="${BASE_RELEASE_VERSION}-insider"
   else
-    RELEASE_VERSION="${MS_TAG}${TIME_PATCH}"
+    BASE_RELEASE_VERSION="${MS_TAG}${TIME_PATCH}"
+    RELEASE_VERSION="${BASE_RELEASE_VERSION}${RUNQL_CLIENT_SUFFIX}"
   fi
 else
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
     if [[ "${RELEASE_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-5])[0-9]+-insider$ ]];
     then
       MS_TAG="${BASH_REMATCH[1]}"
+      BASE_RELEASE_VERSION="${RELEASE_VERSION%-insider}"
     else
       echo "Error: Bad RELEASE_VERSION: ${RELEASE_VERSION}"
       exit 1
@@ -47,6 +75,11 @@ else
     if [[ "${RELEASE_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-5])[0-9]+$ ]];
     then
       MS_TAG="${BASH_REMATCH[1]}"
+      BASE_RELEASE_VERSION="${RELEASE_VERSION}"
+
+      if [[ -n "${RUNQL_CLIENT_SUFFIX}" ]] && [[ "${BASE_RELEASE_VERSION}" == *"${RUNQL_CLIENT_SUFFIX}" ]]; then
+        BASE_RELEASE_VERSION="${BASE_RELEASE_VERSION%${RUNQL_CLIENT_SUFFIX}}"
+      fi
     else
       echo "Error: Bad RELEASE_VERSION: ${RELEASE_VERSION}"
       exit 1
@@ -99,11 +132,17 @@ cd ..
 
 # for GH actions
 if [[ "${GITHUB_ENV}" ]]; then
+  echo "BASE_RELEASE_VERSION=${BASE_RELEASE_VERSION}" >> "${GITHUB_ENV}"
   echo "MS_TAG=${MS_TAG}" >> "${GITHUB_ENV}"
   echo "MS_COMMIT=${MS_COMMIT}" >> "${GITHUB_ENV}"
   echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "${GITHUB_ENV}"
+  echo "RUNQL_CLIENT_TAG=${RUNQL_CLIENT_TAG}" >> "${GITHUB_ENV}"
+  echo "RUNQL_CLIENT_VERSION=${RUNQL_CLIENT_VERSION}" >> "${GITHUB_ENV}"
 fi
 
+export BASE_RELEASE_VERSION
 export MS_TAG
 export MS_COMMIT
 export RELEASE_VERSION
+export RUNQL_CLIENT_TAG
+export RUNQL_CLIENT_VERSION

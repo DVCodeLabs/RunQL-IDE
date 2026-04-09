@@ -13,6 +13,11 @@ elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
 
 	export SHOULD_BUILD="yes"
 	export SHOULD_DEPLOY="no"
+elif [[ "${GITHUB_EVENT_NAME}" == "repository_dispatch" ]]; then
+  echo "It's a repository dispatch"
+
+  export SHOULD_DEPLOY="yes"
+  export NEW_RELEASE="true"
 elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
   if [[ "${GENERATE_ASSETS}" == "true" ]]; then
     echo "It will generate the assets"
@@ -32,6 +37,7 @@ fi
 
 if [[ "${GITHUB_ENV}" ]]; then
   echo "GITHUB_BRANCH=${GITHUB_BRANCH}" >> "${GITHUB_ENV}"
+  echo "NEW_RELEASE=${NEW_RELEASE}" >> "${GITHUB_ENV}"
   echo "SHOULD_BUILD=${SHOULD_BUILD}" >> "${GITHUB_ENV}"
   echo "SHOULD_DEPLOY=${SHOULD_DEPLOY}" >> "${GITHUB_ENV}"
   echo "VSCODE_QUALITY=${VSCODE_QUALITY}" >> "${GITHUB_ENV}"

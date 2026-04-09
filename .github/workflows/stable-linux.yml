@@ -16,7 +16,7 @@ on:
         type: string
         description: Checkout PR
   repository_dispatch:
-    types: [stable]
+    types: [runql-client-release]
   push:
     branches: [ master ]
     paths-ignore:
@@ -29,13 +29,16 @@ on:
 
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-  APP_NAME: VSCodium
+  APP_NAME: RunQL
   ASSETS_REPOSITORY: ${{ github.repository }}
-  BINARY_NAME: codium
+  BINARY_NAME: runql
   DISABLE_UPDATE: 'yes'
   GH_REPO_PATH: ${{ github.repository }}
-  ORG_NAME: ${{ github.repository_owner }}
+  ORG_NAME: RunQL
   OS_NAME: linux
+  RUNQL_CLIENT_REPO: DVCodeLabs/RunQL
+  RUNQL_CLIENT_TAG: ${{ github.event.client_payload.extension_tag || '' }}
+  RUNQL_CLIENT_VERSION: ${{ github.event.client_payload.extension_version || github.event.client_payload.extension_tag || '' }}
   VERSIONS_REPOSITORY: ${{ github.repository_owner }}/versions
   VSCODE_QUALITY: stable
 
@@ -161,27 +164,13 @@ jobs:
         - slug: X64
           vscode_arch: x64
           npm_arch: x64
+          runql_client_target: linux-x64
           image: vscodium/vscodium-linux-build-agent:focal-x64
         - slug: ARM64
           vscode_arch: arm64
           npm_arch: arm64
+          runql_client_target: linux-arm64
           image: vscodium/vscodium-linux-build-agent:focal-arm64
-        - slug: ARM32
-          vscode_arch: armhf
-          npm_arch: arm
-          image: vscodium/vscodium-linux-build-agent:focal-armhf
-        - slug: RISCV64
-          vscode_arch: riscv64
-          npm_arch: riscv64
-          image: vscodium/vscodium-linux-build-agent:focal-riscv64
-        - slug: LOONG64
-          vscode_arch: loong64
-          npm_arch: loong64
-          image: vscodium/vscodium-linux-build-agent:crimson-loong64
-        - slug: PPC64
-          vscode_arch: ppc64le
-          npm_arch: ppc64
-          image: vscodium/vscodium-linux-build-agent:focal-ppc64le
     container:
       image: ${{ matrix.image }}
     env:
@@ -192,6 +181,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
       SHOULD_BUILD: ${{ (needs.check.outputs.SHOULD_BUILD == 'yes' || github.event.inputs.generate_assets == 'true') && 'yes' || 'no' }}
       SHOULD_DEPLOY: ${{ needs.check.outputs.SHOULD_DEPLOY }}
+      RUNQL_CLIENT_TARGET: ${{ matrix.runql_client_target }}
       VSCODE_ARCH: ${{ matrix.vscode_arch }}
     outputs:
       RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
@@ -262,7 +252,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./update_version.sh
-        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes' && github.repository_owner == 'VSCodium'
 
       - name: Upload assets
         uses: actions/upload-artifact@v7
@@ -287,21 +277,6 @@ jobs:
         - slug: ARM64
           vscode_arch: arm64
           npm_arch: arm64
-        - slug: ARM32
-          vscode_arch: armhf
-          npm_arch: arm
-        - slug: PPC64
-          vscode_arch: ppc64le
-          npm_arch: ppc64
-        - slug: RISCV64
-          vscode_arch: riscv64
-          npm_arch: riscv64
-        - slug: LOONG64
-          vscode_arch: loong64
-          npm_arch: loong64
-        - slug: S390X
-          vscode_arch: s390x
-          npm_arch: s390x
     env:
       BUILD_SOURCEVERSION: ${{ needs.compile.outputs.BUILD_SOURCEVERSION }}
       DISABLED: ${{ vars[format('DISABLE_STABLE_LINUX_REH_{0}', matrix.slug)] }}
@@ -311,7 +286,7 @@ jobs:
       SHOULD_BUILD: ${{ needs.check.outputs.SHOULD_BUILD }}
       SHOULD_DEPLOY: ${{ needs.check.outputs.SHOULD_DEPLOY }}
       VSCODE_ARCH: ${{ matrix.vscode_arch }}
-    if: needs.check.outputs.SHOULD_BUILD == 'yes' || github.event.inputs.generate_assets == 'true'
+    if: github.repository_owner == 'VSCodium' && (needs.check.outputs.SHOULD_BUILD == 'yes' || github.event.inputs.generate_assets == 'true')
 
     steps:
       - uses: actions/checkout@v6
@@ -490,7 +465,7 @@ jobs:
           package_type: stable
         # - package_name: vscodium-git
         #   package_type: rolling
-    if: needs.check.outputs.SHOULD_DEPLOY == 'yes'
+    if: needs.check.outputs.SHOULD_DEPLOY == 'yes' && github.repository_owner == 'VSCodium'
 
     steps:
       - name: Publish ${{ matrix.package_name }}
@@ -517,7 +492,7 @@ jobs:
         platform:
         - amd64
         - arm64
-    if: needs.check.outputs.SHOULD_DEPLOY == 'yes' && needs.check.outputs.SHOULD_BUILD_SNAP != 'no' && vars.DISABLE_STABLE_SNAP != 'yes'
+    if: needs.check.outputs.SHOULD_DEPLOY == 'yes' && needs.check.outputs.SHOULD_BUILD_SNAP != 'no' && vars.DISABLE_STABLE_SNAP != 'yes' && github.repository_owner == 'VSCodium'
 
     steps:
       - uses: actions/checkout@v6
@@ -574,7 +549,7 @@ jobs:
       - check
       - build
     runs-on: ubuntu-latest
-    if: needs.check.outputs.SHOULD_DEPLOY == 'yes' && github.event.inputs.generate_assets != 'true'
+    if: needs.check.outputs.SHOULD_DEPLOY == 'yes' && github.event.inputs.generate_assets != 'true' && github.repository_owner == 'VSCodium'
 
     steps:
       - name: Trigger repository rebuild
@@ -587,7 +562,7 @@ jobs:
       - check
       - build
     runs-on: ubuntu-latest
-    if: needs.check.outputs.SHOULD_DEPLOY == 'yes' && github.event.inputs.generate_assets != 'true'
+    if: needs.check.outputs.SHOULD_DEPLOY == 'yes' && github.event.inputs.generate_assets != 'true' && github.repository_owner == 'VSCodium'
 
     steps:
       - name: Trigger repository rebuild

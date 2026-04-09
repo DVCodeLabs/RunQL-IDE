@@ -627,5 +627,33 @@
     "gruntfuggly.todo-tree": {
       "default": false
     }
-  }
+  },
+  "nameShort": "RunQL",
+  "nameLong": "RunQL",
+  "applicationName": "runql-ide",
+  "dataFolderName": ".runql-ide",
+  "linuxIconName": "runql-ide",
+  "urlProtocol": "runql-ide",
+  "serverApplicationName": "runql-ide-server",
+  "serverDataFolderName": ".runql-ide-server",
+  "darwinBundleIdentifier": "com.dvcode.runqlide",
+  "win32AppUserModelId": "RunQLIDE.RunQLIDE",
+  "win32DirName": "RunQL",
+  "win32MutexName": "runqlide",
+  "win32NameVersion": "RunQL",
+  "win32RegValueName": "RunQL",
+  "win32ShellNameShort": "RunQL",
+  "win32AppId": "{{B1F4CD85-8A00-401D-9F2D-327022524298}",
+  "win32x64AppId": "{{9D8EC72A-5A8E-40C5-9EA5-FE896325ACAF}",
+  "win32arm64AppId": "{{C4BC477B-334C-4B8F-A4D0-675D8C277DFB}",
+  "win32UserAppId": "{{EFE5B255-2ECC-41F0-A4EA-7B76AC20D119}",
+  "win32x64UserAppId": "{{650CCB3A-1703-4AA7-8517-9332C8E43A55}",
+  "win32arm64UserAppId": "{{FF841066-3EF9-4698-A095-815360E3105F}",
+  "tunnelApplicationName": "runql-ide-tunnel",
+  "win32TunnelServiceMutex": "runqlide-tunnelservice",
+  "win32TunnelMutex": "runqlide-tunnel",
+  "win32ContextMenu.x64.clsid": "55049B3A-B808-4F2E-8794-B2C696A835CB",
+  "win32ContextMenu.arm64.clsid": "7568EB70-8115-470F-87C8-4D3978D547A4",
+  "enableTelemetry": false,
+  "showTelemetryOptOut": false
 }

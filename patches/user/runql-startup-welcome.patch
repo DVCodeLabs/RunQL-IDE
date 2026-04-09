@@ -1,0 +1,29 @@
+diff --git a/src/vs/workbench/contrib/welcomeGettingStarted/browser/startupPage.ts b/src/vs/workbench/contrib/welcomeGettingStarted/browser/startupPage.ts
+index 41b1f95..420f5a1 100644
+--- a/src/vs/workbench/contrib/welcomeGettingStarted/browser/startupPage.ts
++++ b/src/vs/workbench/contrib/welcomeGettingStarted/browser/startupPage.ts
+@@ -138,7 +138,7 @@ export class StartupPageRunnerContribution extends Disposable implements IWorkbe
+ 				if (startupEditorSetting.value === 'readme') {
+ 					await this.openReadme();
+ 				} else if (startupEditorSetting.value === 'welcomePage' || startupEditorSetting.value === 'welcomePageInEmptyWorkbench') {
+-					await this.openGettingStarted(true);
++					await this.openRunQLWelcome();
+ 				} else if (startupEditorSetting.value === 'terminal') {
+ 					this.commandService.executeCommand(TerminalCommandId.CreateTerminalEditor);
+ 				}
+@@ -217,6 +217,14 @@ export class StartupPageRunnerContribution extends Disposable implements IWorkbe
+ 		}
+ 	}
+ 
++	private async openRunQLWelcome() {
++		try {
++			await this.commandService.executeCommand('runql.welcome.open');
++		} catch {
++			await this.openGettingStarted(true);
++		}
++	}
++
+ 	private shouldPreserveFocus(): boolean {
+ 		const activeElement = getActiveElement();
+ 		if (!activeElement || activeElement === mainWindow.document.body || this.layoutService.hasFocus(Parts.EDITOR_PART)) {
+ 			return false; // steal focus if nothing meaningful is focused or editor area has focus

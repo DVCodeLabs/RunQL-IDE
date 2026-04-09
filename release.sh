@@ -18,8 +18,10 @@ if [[ $( gh release view "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" 2>&1
 
   . ./utils.sh
 
-  APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
+APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
   VERSION="${RELEASE_VERSION%-insider}"
+  DISPLAY_RUNQL_CLIENT_VERSION="${RUNQL_CLIENT_VERSION:-not bundled}"
+  DISPLAY_BASE_RELEASE_VERSION="${BASE_RELEASE_VERSION:-${VERSION}}"
 
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
     NOTES="update vscode to [${MS_COMMIT}](https://github.com/microsoft/vscode/tree/${MS_COMMIT})"
@@ -29,10 +31,12 @@ if [[ $( gh release view "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" 2>&1
     replace "s|@@APP_NAME_QUALITY@@|${APP_NAME}-Insiders|g" release_notes.md
     replace "s|@@ASSETS_REPOSITORY@@|${ASSETS_REPOSITORY}|g" release_notes.md
     replace "s|@@BINARY_NAME@@|${BINARY_NAME}|g" release_notes.md
+    replace "s|@@BASE_RELEASE_VERSION@@|${DISPLAY_BASE_RELEASE_VERSION}|g" release_notes.md
     replace "s|@@MS_TAG@@|${MS_COMMIT}|g" release_notes.md
     replace "s|@@MS_URL@@|https://github.com/microsoft/vscode/tree/${MS_COMMIT}|g" release_notes.md
     replace "s|@@QUALITY@@|-insider|g" release_notes.md
     replace "s|@@RELEASE_NOTES@@||g" release_notes.md
+    replace "s|@@RUNQL_CLIENT_VERSION@@|${DISPLAY_RUNQL_CLIENT_VERSION}|g" release_notes.md
     replace "s|@@VERSION@@|${VERSION}|g" release_notes.md
 
     gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_VERSION}" --notes-file release_notes.md
@@ -46,10 +50,12 @@ if [[ $( gh release view "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" 2>&1
     replace "s|@@APP_NAME_QUALITY@@|${APP_NAME}|g" release_notes.md
     replace "s|@@ASSETS_REPOSITORY@@|${ASSETS_REPOSITORY}|g" release_notes.md
     replace "s|@@BINARY_NAME@@|${BINARY_NAME}|g" release_notes.md
+    replace "s|@@BASE_RELEASE_VERSION@@|${DISPLAY_BASE_RELEASE_VERSION}|g" release_notes.md
     replace "s|@@MS_TAG@@|${MS_TAG}|g" release_notes.md
     replace "s|@@MS_URL@@|https://code.visualstudio.com/updates/v$( echo "${MS_TAG//./_}" | cut -d'_' -f 1,2 )|g" release_notes.md
     replace "s|@@QUALITY@@||g" release_notes.md
     replace "s|@@RELEASE_NOTES@@|${RELEASE_NOTES//$'\n'/\\n}|g" release_notes.md
+    replace "s|@@RUNQL_CLIENT_VERSION@@|${DISPLAY_RUNQL_CLIENT_VERSION}|g" release_notes.md
     replace "s|@@VERSION@@|${VERSION}|g" release_notes.md
 
     gh release edit "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --notes-file release_notes.md

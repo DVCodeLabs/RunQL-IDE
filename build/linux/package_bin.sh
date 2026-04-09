@@ -14,6 +14,10 @@ tar -xzf ./vscode.tar.gz
 
 chown -R root:root vscode
 
+if [[ -n "${RUNQL_CLIENT_VERSION}" ]] && [[ -n "${RUNQL_CLIENT_TARGET}" ]]; then
+  ./dev/install-runql-client-release.sh "${RUNQL_CLIENT_VERSION}" "${RUNQL_CLIENT_TARGET}" vscode
+fi
+
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
 export VSCODE_PLATFORM='linux'

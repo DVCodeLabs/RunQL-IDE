@@ -13,7 +13,7 @@ on:
         type: string
         description: Checkout PR
   repository_dispatch:
-    types: [stable]
+    types: [runql-client-release]
   push:
     branches: [ master ]
     paths-ignore:
@@ -25,12 +25,15 @@ on:
     - '**/*.md'
 
 env:
-  APP_NAME: VSCodium
+  APP_NAME: RunQL
   ASSETS_REPOSITORY: ${{ github.repository }}
-  BINARY_NAME: codium
+  BINARY_NAME: runql
   GH_REPO_PATH: ${{ github.repository }}
-  ORG_NAME: ${{ github.repository_owner }}
+  ORG_NAME: RunQL
   OS_NAME: osx
+  RUNQL_CLIENT_REPO: DVCodeLabs/RunQL
+  RUNQL_CLIENT_TAG: ${{ github.event.client_payload.extension_tag || '' }}
+  RUNQL_CLIENT_VERSION: ${{ github.event.client_payload.extension_version || github.event.client_payload.extension_tag || '' }}
   VERSIONS_REPOSITORY: ${{ github.repository_owner }}/versions
   VSCODE_QUALITY: stable
 
@@ -43,8 +46,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-15-intel
-            vscode_arch: x64
           - runner: [self-hosted, macOS, ARM64]
             vscode_arch: arm64
 
@@ -67,7 +68,10 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-        if: env.VSCODE_ARCH == 'x64'
+
+      - name: Install bundled RunQL client
+        run: ./dev/install-runql-client-release.sh "${RUNQL_CLIENT_VERSION}" "darwin-arm64" overlay stable
+        if: env.RUNQL_CLIENT_VERSION != ''
 
       - name: Clone VSCode repo
         run: . get_repo.sh
@@ -111,7 +115,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./update_version.sh
-        if: env.SHOULD_DEPLOY == 'yes'
+        if: env.SHOULD_DEPLOY == 'yes' && github.repository_owner == 'VSCodium'
 
       - name: Upload assets
         uses: actions/upload-artifact@v7
