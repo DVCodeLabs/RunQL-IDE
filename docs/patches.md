@@ -1,6 +1,6 @@
 # Patches
 
-Documentation for VSCodium patches applied on top of VS Code.
+This page documents patches that RunQL carries on top of the upstream Code OSS and VSCodium base.
 
 ---
 
@@ -8,36 +8,15 @@ Documentation for VSCodium patches applied on top of VS Code.
 
 **Replace `@vscode/policy-watcher` with `@vscodium/policy-watcher`**
 
-VS Code uses `@vscode/policy-watcher` to enforce Group Policy Objects (GPOs) on
-Windows. That package reads from:
+The upstream policy watcher package used by VS Code reads Windows Group Policy values from Microsoft-specific registry paths.
 
-```
-HKLM\SOFTWARE\Policies\Microsoft\<productName>
-```
+The VSCodium patch replaces that watcher with `@vscodium/policy-watcher`, which uses a separate vendor name and therefore a different registry root.
 
-VSCodium forks this into `@vscodium/policy-watcher`, which takes a separate
-`vendorName` argument. The `createWatcher()` call becomes:
+That means Code OSS based products built through the VSCodium pipeline do not read policy settings from the same path as Microsoft VS Code.
 
-```ts
-createWatcher('VSCodium', this.productName, ...)
-```
+If you are debugging enterprise policy behavior, inspect the current product branding and the VSCodium policy watcher implementation to confirm the exact registry path used by the build you shipped.
 
-Because VSCodium sets `product.nameLong = 'VSCodium'` (via `prepare_vscode.sh`),
-`this.productName` resolves to `'VSCodium'` at runtime. Therefore, the final
-Windows registry key that VSCodium reads policies from is:
-
-```
-HKLM\SOFTWARE\Policies\VSCodium\VSCodium\<PolicyName>
-```
-
-(or `HKCU\SOFTWARE\Policies\VSCodium\VSCodium\<PolicyName>` for per-user policies)
-
-This differs from VS Code's path (`Microsoft\VSCode`) and is the root cause of
-[issue #2714](https://github.com/VSCodium/vscodium/issues/2714) where users mirror
-VS Code's registry structure and find their GPOs ignored. Enterprise admins must
-use the VSCodium-specific registry path.
-
-### References
+References:
 
 - [VSCodium issue #2714](https://github.com/VSCodium/vscodium/issues/2714)
-- [VSCodium/policy-watcher — RegistryPolicy.hh](https://github.com/VSCodium/policy-watcher/blob/main/src/windows/RegistryPolicy.hh)
+- [VSCodium policy-watcher](https://github.com/VSCodium/policy-watcher)

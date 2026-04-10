@@ -5,72 +5,60 @@
 ## Table of Contents
 
 - [Sign in with GitHub](#signin-github)
-- [Accounts authentication](https://github.com/VSCodium/vscodium/blob/master/docs/accounts-authentication.md)
-- [How do I run VSCodium in portable mode?](#portable)
-- [How do I fix the default file manager?](#file-manager)
-- [How do I press and hold a key and have it repeat in VSCodium?](#press-and-hold)
-- [How do I open VSCodium from the terminal?](#terminal-support)
-  - [From Linux .tar.gz](#from-linux-targz)
+- [Accounts authentication](./accounts-authentication.md)
+- [Portable mode](#portable)
+- [Default file manager on Linux](#file-manager)
+- [Press and hold on macOS](#press-and-hold)
+- [Open RunQL from the terminal](#terminal-support)
 
 ## <a id="signin-github"></a>Sign in with GitHub
 
-In VSCodium, `Sign in with GitHub` is using a Personal Access Token.<br />
-Follow the documentation https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token to create your token.<br />
-Select the scopes dependending on the extension which needs access to GitHub. (GitLens requires the `repo` scope.)
+In RunQL, GitHub sign-in flows may rely on a Personal Access Token depending on the extension and authentication path being used.
 
-### Linux
+See:
 
-If you are getting the error `Writing login information to the keychain failed with error 'The name org.freedesktop.secrets was not provided by any .service files'.`, you need to install the package `gnome-keyring`.
+- [GitHub Personal Access Token documentation](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 
-## <a id="portable"></a>How do I run VSCodium in portable mode?
-You can follow the [Portable Mode instructions](https://code.visualstudio.com/docs/editor/portable) from the Visual Studio Code website.
-- **Windows** / **Linux** : the instructions can be followed as written.
-- **macOS** : portable mode is enabled by the existence of a specially named folder. For Visual Studio Code that folder name is `code-portable-data`. For VSCodium, that folder name is `codium-portable-data`. So to enable portable mode for VSCodium on Mac OS, follow the instructions outlined in the [link above](https://code.visualstudio.com/docs/editor/portable), but create a folder named `codium-portable-data` instead of `code-portable-data`.
+If a Linux login flow fails with a keychain error, install `gnome-keyring`.
 
-## <a id="file-manager"></a>How do I fix the default file manager (Linux)?
+## <a id="portable"></a>Portable mode
 
-In some cases, VSCodium becomes the file manager used to open directories (instead of apps like Dolphin or Nautilus).<br />
-It's due to that no application was defined as the default file manager and so the system is using the latest capable application.
+Portable mode generally follows the same model as VS Code, but the actual data folder name depends on the current product branding and packaged output. Verify the final packaged app behavior before depending on portable mode in automation.
 
-To set the default app, create the file `~/.config/mimeapps.list` with the content like:
-```
+## <a id="file-manager"></a>Default file manager on Linux
+
+If RunQL becomes the default application for opening directories, define the intended file manager explicitly in `~/.config/mimeapps.list`:
+
+```ini
 [Default Applications]
 inode/directory=org.gnome.Nautilus.desktop;
 ```
 
-You can find your regular file manager with the command:
-```
-> grep directory /usr/share/applications/mimeinfo.cache
-inode/directory=codium.desktop;org.gnome.Nautilus.desktop;
-```
-
-## <a id="press-and-hold"></a>How do I press and hold a key and have it repeat in VSCodium (Mac)?
-
-This is a common question for Visual Studio Code and the procedure is slightly different in VSCodium because the `defaults` path is different.
+To inspect what your system currently associates with directories:
 
 ```bash
-$ defaults write com.vscodium ApplePressAndHoldEnabled -bool false
+grep directory /usr/share/applications/mimeinfo.cache
 ```
 
-## <a id="terminal-support"></a>How do I open VSCodium from the terminal?
+## <a id="press-and-hold"></a>Press and hold on macOS
 
-For macOS and Windows:
-- Go to the command palette (View | Command Palette...)
-- Choose `Shell command: Install 'codium' command in PATH`.
-
-![](https://user-images.githubusercontent.com/2707340/60140295-18338a00-9766-11e9-8fda-b525b6f15c13.png)
-
-This allows you to open files or directories in VSCodium directly from your terminal:
+If you want key repeat instead of accent selection:
 
 ```bash
-~/in-my-project $ codium . # open this directory
-~/in-my-project $ codium file.txt # open this file
+defaults write com.dvcode.runqlide ApplePressAndHoldEnabled -bool false
 ```
 
-Feel free to alias this command to something easier to type in your shell profile (e.g. `alias code=codium`).
+## <a id="terminal-support"></a>Open RunQL from the terminal
 
-On Linux, when installed with a package manager, `codium` has been installed in your `PATH`.
+On macOS and Windows, install the shell command from the Command Palette.
 
-### <a id="from-linux-targz"></a>From Linux .tar.gz
+Then you can open files or folders directly:
 
-When the archive `VSCodium-linux-<arch>-<version>.tar.gz` is extracted, the main entry point for VSCodium is `./bin/codium`.
+```bash
+runql-ide .
+runql-ide file.txt
+```
+
+If you later rename the shipped CLI to `runql`, use that command instead. The exact executable name depends on the packaged product settings and installer behavior.
+
+On Linux package installs, the launcher should be added to `PATH` automatically.

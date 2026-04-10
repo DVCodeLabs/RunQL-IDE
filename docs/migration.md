@@ -4,51 +4,53 @@
 
 ## Table of Contents
 
-- [Manual Migration from Visual Studio Code to VSCodium](#manual-migration)
-- [Semi-Automatic Migration with "Sync Settings" Extension](#semi-automatic-migration)
+- [Manual migration from VS Code](#manual-migration)
+- [Semi-automatic migration with Sync Settings](#semi-automatic-migration)
 
-## <a id="manual-migration"></a>Manual Migration from Visual Studio Code to VSCodium
+## <a id="manual-migration"></a>Manual migration from VS Code
 
-VSCodium (and a freshly cloned copy of vscode built from source) stores its extension files in `~/.vscode-oss`. So if you currently have Visual Studio Code installed, your extensions won't automatically populate. You can copy the `extensions` from `~/.vscode/extensions` to `~/.vscode-oss/extensions`.
+If you are moving from Visual Studio Code to RunQL, the main things to migrate are:
 
-Visual Studio Code stores its `keybindings.json` and `settings.json` file in these locations:
+- user settings
+- keybindings
+- snippets
+- extensions
 
-- __Windows__: `%APPDATA%\Code\User`
-- __macOS__: `$HOME/Library/Application Support/Code/User`
-- __Linux__: `$HOME/.config/Code/User`
+Visual Studio Code stores user settings in:
 
-You can copy these files to the VSCodium user settings folder:
+- Windows: `%APPDATA%\\Code\\User`
+- macOS: `$HOME/Library/Application Support/Code/User`
+- Linux: `$HOME/.config/Code/User`
 
-- __Windows__: `%APPDATA%\VSCodium\User`
-- __macOS__: `$HOME/Library/Application Support/VSCodium/User`
-- __Linux__: `$HOME/.config/VSCodium/User`
+RunQL stores user settings in:
 
-To copy your settings manually:
+- Windows: `%APPDATA%\\RunQL\\User`
+- macOS: `$HOME/Library/Application Support/RunQL/User`
+- Linux: `$HOME/.config/RunQL/User`
 
-- In Visual Studio Code, go to Settings (`Meta+,`)
-- Click the three dots `...` and choose 'Open settings.json'
-- Copy the contents of settings.json into the same place in VSCodium
+To migrate manually:
 
-## <a id="semi-automatic-migration"></a>Semi-Automatic Migration with "Sync Settings" Extension
+1. Open VS Code settings JSON.
+2. Copy the contents into the matching RunQL `settings.json`.
+3. Repeat for `keybindings.json` and any snippets you want to carry over.
+4. Reinstall extensions from Open VSX or install compatible `.vsix` files manually.
 
-The [**Sync Settings**](https://github.com/zokugun/vscode-sync-settings) extension can simplify the migration process by enabling synchronization of settings, keybindings, extensions, and more between Visual Studio Code and VSCodium. Its author is the main maintainer of VSCodium ;)
+Extension compatibility is not one-to-one. Some Microsoft marketplace extensions only work with the official Microsoft build.
 
-The extension is available in the Visual Studio Marketplace, OpenVSX or directly in its GitHub repository.
+See:
 
-### Steps:
+- [docs/extensions-compatibility.md](/Users/rob/Code/new-api/RunQL-IDE/docs/extensions-compatibility.md)
 
-1. Install the **Sync Settings** extension in both Visual Studio Code and VSCodium.
-2. Configure the extension on both Visual Studio Code and VSCodium:
-  - Open Command Palette (`Meta+Shift+P`).
-  - Search for `Sync Settings: Open the repository settings` and execute the command.
-  - Configure the repository
-3. Export your current settings from Visual Studio Code:
-  - Open Command Palette (`Meta+Shift+P`).
-  - Search for `Sync Settings: Upload (user -> repository)` and execute the command.
-4. Import the settings into VSCodium:
-  - I recommend the setting `"syncSettings.openOutputOnActivity": true,`.
-  - Open Command Palette (`Meta+Shift+P`).
-  - Search for `Sync Settings: Download (repository -> user)` and execute the command.
-  - Wait for all the extensions to be downloaded and installed (follow logs in the `Output` panel) before restarting VSCodium.
+## <a id="semi-automatic-migration"></a>Semi-automatic migration with Sync Settings
 
-This method ensures that all supported configurations are seamlessly transferred.
+The [Sync Settings](https://github.com/zokugun/vscode-sync-settings) extension can help move settings and extension lists between editors.
+
+Typical flow:
+
+1. Install the extension in both VS Code and RunQL.
+2. Configure the backing repository in both editors.
+3. Upload from VS Code.
+4. Download into RunQL.
+5. Wait until extension installation is complete before restarting RunQL.
+
+This approach is convenient, but you should still review the final extension set for compatibility with RunQL.

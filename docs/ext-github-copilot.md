@@ -1,22 +1,38 @@
 <!-- order: 16 -->
 
-# Extension: GitHub Copilot
+# AI Chat and GitHub Copilot
 
-Unlike Visual Studio Code, in VSCodium, Copilot features are disabled and not configured.
+RunQL ships with telemetry disabled. AI chat features are available only if they are explicitly enabled in the build and in user settings.
 
-## Update your settings
+## Enable AI chat features
 
-In your settings, sets:
+In Settings, make sure:
+
+```json
+"chat.disableAIFeatures": false
 ```
-"chat.disableAIFeatures": false,
-```
 
-## Configure product.json
+If your local build still hides chat features, check the repository patch that disables Copilot defaults:
 
-You need to create a custom `product.json` at the following location (replace `VSCodium` by `VSCodium - Insiders` if you use that):
-- Windows: `%APPDATA%\VSCodium` or `%USERPROFILE%\AppData\Roaming\VSCodium`
-- macOS: `~/Library/Application Support/VSCodium`
-- Linux: `$XDG_CONFIG_HOME/VSCodium` or `~/.config/VSCodium`
+- [patches/disable-copilot.patch](/Users/rob/Code/new-api/RunQL-IDE/patches/disable-copilot.patch)
 
-Then you will need to follow the guide [Running with Code OSS](https://github.com/microsoft/vscode-copilot-chat/blob/main/CONTRIBUTING.md#running-with-code-oss) with the `product.json` file created previously.
-You will need to add the properties: `trustedExtensionAuthAccess` and `defaultChatAgent`.
+For the RunQL build, this patch should leave AI chat enabled when that is the intended product behavior.
+
+## Product configuration
+
+Advanced chat integrations may also require product-level configuration in the generated `product.json`.
+
+For local reference, RunQL user data is stored under the product-specific application support folder:
+
+- Windows: `%APPDATA%\\RunQL`
+- macOS: `~/Library/Application Support/RunQL`
+- Linux: `$XDG_CONFIG_HOME/RunQL` or `~/.config/RunQL`
+
+If you are wiring a custom chat integration into a Code OSS based build, the upstream guidance from the Copilot Chat repository is still the best reference:
+
+- [Running with Code OSS](https://github.com/microsoft/vscode-copilot-chat/blob/main/CONTRIBUTING.md#running-with-code-oss)
+
+Typical product fields involved are:
+
+- `trustedExtensionAuthAccess`
+- `defaultChatAgent`

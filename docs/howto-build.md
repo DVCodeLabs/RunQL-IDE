@@ -1,215 +1,128 @@
 <!-- order: 35 -->
 
-# How to build VSCodium
+# How to Build RunQL
 
 ## Table of Contents
 
 - [Dependencies](#dependencies)
   - [Linux](#dependencies-linux)
-  - [MacOS](#dependencies-macos)
+  - [macOS](#dependencies-macos)
   - [Windows](#dependencies-windows)
-- [Build for Development](#build-dev)
-- [Build for CI/Downstream](#build-ci)
+- [Build for development](#build-dev)
+- [Build for CI](#build-ci)
 - [Build Snap](#build-snap)
-- [Patch Update Process](#patch-update-process)
-  - [Semi-Automated](#patch-update-process-semiauto)
-  - [Manual](#patch-update-process-manual)
+- [Patch update process](#patch-update-process)
 
 ## <a id="dependencies"></a>Dependencies
 
-- node (check [.nvmrc](../.nvmrc) for version)
-- jq
-- git
-- python3 3.11
-- rustup
+- Node.js version from [/.nvmrc](/Users/rob/Code/new-api/RunQL-IDE/.nvmrc)
+- `jq`
+- `git`
+- Python 3.11
+- `rustup`
 
 ### <a id="dependencies-linux"></a>Linux
 
-- gcc
-- g++
-- make
-- pkg-config
-- libx11-dev
-- libxkbfile-dev
-- libsecret-1-dev
-- libkrb5-dev
-- fakeroot
-- rpm
-- rpmbuild
-- dpkg
-- imagemagick (for AppImage)
-- snapcraft
+- `gcc`
+- `g++`
+- `make`
+- `pkg-config`
+- `libx11-dev`
+- `libxkbfile-dev`
+- `libsecret-1-dev`
+- `libkrb5-dev`
+- `fakeroot`
+- `rpm`
+- `rpmbuild`
+- `dpkg`
+- `imagemagick`
+- `snapcraft`
 
-### <a id="dependencies-macos"></a>MacOS
+### <a id="dependencies-macos"></a>macOS
 
-see [the common dependencies](#dependencies)
+Install the common dependencies, plus Xcode Command Line Tools.
+
+For the project-specific local workflow, see:
+
+- [docs/runql-release-automation-checklist.md](/Users/rob/Code/new-api/RunQL-IDE/docs/runql-release-automation-checklist.md)
 
 ### <a id="dependencies-windows"></a>Windows
 
-The build scripts are written in Bash, so on Windows you must run them inside **Git Bash** (bundled with [Git for Windows](https://gitforwindows.org/)) or **WSL2**.
+Run the build scripts from Git Bash or WSL2.
 
-#### Required tools
+Required tools:
 
-- **Git for Windows** — provides Git Bash, `sed`, and POSIX utilities used by the build scripts:
+- Git for Windows
+- Node.js matching [/.nvmrc](/Users/rob/Code/new-api/RunQL-IDE/.nvmrc)
+- `jq`
+- 7-Zip
+- Python 3.11
+- Rustup
 
-  ```cmd
-  winget install --id Git.Git -e
-  ```
+Optional:
 
-- **Node.js** — exact version is specified in [`.nvmrc`](../.nvmrc). Use [nvm-windows](https://github.com/coreybutler/nvm-windows) to manage versions:
+- WiX Toolset v3 for MSI packaging
 
-  ```cmd
-  nvm install <version-from-.nvmrc>
-  nvm use <version-from-.nvmrc>
-  ```
-
-  Alternatively, download directly from [nodejs.org](https://nodejs.org/). During installation, enable **"Automatically install the necessary tools"** to get the C++ build tools (required for native Node addons).
-
-- **jq** — JSON processor used throughout the build scripts:
-
-  ```cmd
-  winget install --id jqlang.jq -e
-  ```
-
-- **7-Zip** — used to package `.zip` archives:
-
-  ```cmd
-  winget install --id 7zip.7zip -e
-  ```
-
-- **Python 3.11** — required by the VS Code build system:
-
-  ```cmd
-  winget install --id Python.Python.3.11 -e
-  ```
-
-  Ensure `python` / `python3` is on your `PATH` after installation.
-
-- **Rustup** — required to compile some native VS Code modules:
-
-  ```cmd
-  winget install --id Rustlang.Rustup -e
-  ```
-
-  Restart your shell afterwards so `cargo` and `rustc` are on your `PATH`.
-
-#### Optional tools
-
-- **WiX Toolset v3** _(only needed for `.msi` installer packaging, i.e., the `-p` flag)_:
-
-  Download from [wixtoolset.org](https://wixtoolset.org/releases/) and ensure `candle.exe` / `light.exe` are on your `PATH`.
-
-#### PATH verification
-
-After installing all tools, verify each is discoverable from Git Bash:
+Verify the toolchain from Git Bash:
 
 ```bash
-node --version    # should match .nvmrc
+node --version
 npm --version
 jq --version
-python3 --version # should be 3.11.x
+python3 --version
 cargo --version
 7z i 2>&1 | head -1
 git --version
 ```
 
-If any command is not found, add its install directory to your `PATH` via **System Properties → Environment Variables → Path**.
+## <a id="build-dev"></a>Build for development
 
-## <a id="build-dev"></a>Build for Development
-
-A build helper script can be found at `dev/build.sh`.
-
-- Linux: `./dev/build.sh`
-- MacOS: `./dev/build.sh`
-- Windows (Git Bash — **recommended**): `"C:\Program Files\Git\bin\bash.exe" ./dev/build.sh`
-- Windows (PowerShell): `powershell -ExecutionPolicy ByPass -File .\dev\build.ps1`
-
-> **Note for Windows users**: Git Bash is the recommended shell because the build scripts rely on POSIX utilities (`sed`, `grep`, `find`, etc.) bundled with Git for Windows. If you use WSL2, follow the Linux dependencies section instead.
-
-### Insider
-
-The `insider` version can be built with `./dev/build.sh -i` on the `insider` branch.
-
-You can try the latest version with the command `./dev/build.sh -il` but the patches might not be up to date.
-
-### Flags
-
-The script `dev/build.sh` provides several flags:
-
-- `-i`: build the Insiders version
-- `-l`: build with latest version of Visual Studio Code
-- `-o`: skip the build step
-- `-p`: generate the packages/assets/installers
-- `-s`: do not retrieve the source code of Visual Studio Code, it won't delete the existing build
-
-## <a id="build-ci"></a>Build for CI/Downstream
-
-Here is the base script to build VSCodium:
+Use the local helper:
 
 ```bash
-# Export necessary environment variables
-export SHOULD_BUILD="yes"
-export SHOULD_BUILD_REH="no"
-export CI_BUILD="no"
-export OS_NAME="linux"
-export VSCODE_ARCH="${vscode_arch}"
-export VSCODE_QUALITY="stable"
-export RELEASE_VERSION="${version}"
-
-. get_repo.sh
-. build.sh
+./dev/build.sh
 ```
 
-To go further, you should look at how we build it:
+Platform notes:
 
-- Linux: https://github.com/VSCodium/vscodium/blob/master/.github/workflows/stable-linux.yml
-- macOS: https://github.com/VSCodium/vscodium/blob/master/.github/workflows/stable-macos.yml
-- Windows: https://github.com/VSCodium/vscodium/blob/master/.github/workflows/stable-windows.yml
+- Linux: `./dev/build.sh`
+- macOS: `./dev/build.sh`
+- Windows Git Bash: `"C:\\Program Files\\Git\\bin\\bash.exe" ./dev/build.sh`
 
-The `./dev/build.sh` script is for development purpose and must be avoided for a packaging purpose.
+Useful flags:
+
+- `-i` build the insiders variant
+- `-l` build against the latest upstream source
+- `-o` skip the build step
+- `-p` generate installers and packages
+- `-s` reuse the existing `vscode/` checkout
+
+## <a id="build-ci"></a>Build for CI
+
+The stable automation lives in the repository workflow files:
+
+- [stable-linux.yml](/Users/rob/Code/new-api/RunQL-IDE/.github/workflows/stable-linux.yml)
+- [stable-macos.yml](/Users/rob/Code/new-api/RunQL-IDE/.github/workflows/stable-macos.yml)
+- [stable-windows.yml](/Users/rob/Code/new-api/RunQL-IDE/.github/workflows/stable-windows.yml)
+
+Those workflows are the source of truth for packaging and release automation. Use `./dev/build.sh` for local development, not as the canonical CI definition.
 
 ## <a id="build-snap"></a>Build Snap
 
-```
-# for the stable version
+```bash
 cd ./stores/snapcraft/stable
-
-# for the insider version
-cd ./stores/snapcraft/insider
-
-# create the snap
 snapcraft --use-lxd
-
-# verify the snap
-review-tools.snap-review --allow-classic codium*.snap
+review-tools.snap-review --allow-classic runql*.snap
 ```
 
-## <a id="patch-update-process"></a>Patch Update Process
+## <a id="patch-update-process"></a>Patch update process
 
-## <a id="patch-update-process-semiauto"></a>Semi-Automated
+If an upstream update breaks a patch:
 
-- run `./dev/build.sh`, if a patch is failing then,
-- run `./dev/update_patches.sh`
-- when the script pauses at `Press any key when the conflict have been resolved...`, open `vscode` directory in **VSCodium**
-- fix all the `*.rej` files
-- run `npm run watch`
-- run `./script/code.sh` until everything is ok
-- press any key to continue the script `update_patches.sh`
+1. Run `./dev/build.sh`.
+2. Identify the failing patch.
+3. Rebase or rebuild the patch against the refreshed `vscode/` checkout.
+4. Move the durable change back into `src/stable`, `src/insider`, or `patches/user` as appropriate.
+5. Rebuild and verify.
 
-## <a id="patch-update-process-manual"></a>Manual
-
-- run `./dev/build.sh`, if a patch is failing then,
-- run `./dev/patch.sh <name>.patch` where `<name>.patch` is the failed patch
-- open `vscode` directory in a new **VSCodium**'s window
-- fix all the `*.rej` files
-- run `npm run watch`
-- run `./script/code.sh` until everything is ok
-- go back to the command line running `./dev/patch.sh`, press `enter` to validate the changes and it will update the patch
-
-### <a id="icons"></a>icons/build_icons.sh
-
-To run `icons/build_icons.sh`, you will need:
-
-- imagemagick
-- png2icns (`npm install png2icns -g`)
-- librsvg
+The main project rule is unchanged: do not keep long-term customizations directly inside `vscode/`.
