@@ -29,7 +29,6 @@ When you open an issue, include enough detail to reproduce the problem:
 If you want to make changes, start with:
 
 - [docs/howto-build.md](./docs/howto-build.md)
-- [docs/co-op-runql-ide-setup.md](./docs/co-op-runql-ide-setup.md)
 
 ### Building RunQL
 

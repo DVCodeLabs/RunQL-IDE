@@ -56,7 +56,6 @@ Install the extension-only version from:
 Build instructions live in:
 
 - [docs/howto-build.md](./docs/howto-build.md)
-- [docs/co-op-runql-ide-setup.md](./docs/co-op-runql-ide-setup.md)
 
 ## Supported Platforms
 
