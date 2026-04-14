@@ -9,18 +9,21 @@ on:
       generate_assets:
         type: boolean
         description: Generate assets
+      runql_client_version:
+        type: string
+        description: "RunQL extension version to bundle (example: 1.4.1 or v1.4.1)"
       checkout_pr:
         type: string
         description: Checkout PR
   repository_dispatch:
     types: [runql-client-release]
   push:
-    branches: [ master ]
+    branches: [ main ]
     paths-ignore:
     - '**/*.md'
     - 'upstream/*.json'
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
     paths-ignore:
     - '**/*.md'
 
@@ -36,7 +39,7 @@ env:
   OS_NAME: osx
   RUNQL_CLIENT_REPO: DVCodeLabs/RunQL
   RUNQL_CLIENT_TAG: ${{ github.event.client_payload.extension_tag || '' }}
-  RUNQL_CLIENT_VERSION: ${{ github.event.client_payload.extension_version || github.event.client_payload.extension_tag || '' }}
+  RUNQL_CLIENT_VERSION: ${{ github.event.inputs.runql_client_version || github.event.client_payload.extension_version || github.event.client_payload.extension_tag || '' }}
   VERSIONS_REPOSITORY: ${{ github.repository_owner }}/versions
   VSCODE_QUALITY: stable
 
