@@ -24,6 +24,9 @@ on:
     paths-ignore:
     - '**/*.md'
 
+permissions:
+  contents: write
+
 env:
   APP_NAME: RunQL
   ASSETS_REPOSITORY: ${{ github.repository }}
@@ -165,6 +168,7 @@ jobs:
       MS_COMMIT: ${{ needs.check.outputs.MS_COMMIT }}
       MS_TAG: ${{ needs.check.outputs.MS_TAG }}
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
+      SIGN_WINDOWS: ${{ secrets.SIGNPATH_API_TOKEN != '' && secrets.SIGNPATH_ORGANIZATION_ID != '' && secrets.SIGNPATH_PROJECT_SLUG != '' && secrets.SIGNPATH_POLICY_SLUG != '' && 'yes' || 'no' }}
       SHOULD_BUILD: ${{ (needs.check.outputs.SHOULD_BUILD == 'yes' || github.event.inputs.generate_assets == 'true') && 'yes' || 'no' }}
       SHOULD_DEPLOY: ${{ needs.check.outputs.SHOULD_DEPLOY }}
       RUNQL_CLIENT_TARGET: win32-x64
@@ -231,7 +235,7 @@ jobs:
             assets/*.exe
             assets/*.msi
           retention-days: 1
-        if: env.SHOULD_BUILD == 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
+        if: env.SHOULD_BUILD == 'yes' && env.SIGN_WINDOWS == 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
 
       - name: Signing
         uses: signpath/github-action-submit-signing-request@v2
@@ -246,7 +250,11 @@ jobs:
           # 8h to manually approve the request
           wait-for-completion-timeout-in-seconds: 28800
           output-artifact-directory: assets/
-        if: env.SHOULD_BUILD == 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
+        if: env.SHOULD_BUILD == 'yes' && env.SIGN_WINDOWS == 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
+
+      - name: Continue without Windows signing
+        run: echo "SignPath secrets are not configured. Continuing with unsigned Windows artifacts."
+        if: env.SHOULD_BUILD == 'yes' && env.SIGN_WINDOWS != 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
 
       - name: Prepare checksums
         run: ./prepare_checksums.sh
@@ -261,7 +269,7 @@ jobs:
       - name: Update versions repo
         env:
           FORCE_UPDATE: ${{ github.event.inputs.force_version }}
-          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./update_version.sh
         if: env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes' && github.repository_owner == 'VSCodium'
@@ -301,5 +309,5 @@ jobs:
           version: ${{ env.RELEASE_VERSION }}
           release-tag: ${{ env.RELEASE_VERSION }}
           installers-regex: '\.exe$' # only .exe files
-          token: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
         if: env.SHOULD_DEPLOY == 'yes'
