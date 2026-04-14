@@ -32,6 +32,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run stable-macos.yml \
+            --repo "${GITHUB_REPOSITORY}" \
             --ref main \
             -f force_version=${{ github.event.inputs.force_version || 'false' }} \
             -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
@@ -43,6 +44,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run stable-linux.yml \
+            --repo "${GITHUB_REPOSITORY}" \
             --ref main \
             -f force_version=${{ github.event.inputs.force_version || 'false' }} \
             -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
@@ -55,6 +57,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run stable-windows.yml \
+            --repo "${GITHUB_REPOSITORY}" \
             --ref main \
             -f force_version=${{ github.event.inputs.force_version || 'false' }} \
             -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
