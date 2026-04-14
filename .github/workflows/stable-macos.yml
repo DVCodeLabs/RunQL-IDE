@@ -75,6 +75,11 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Resolve bundled RunQL client version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./dev/resolve-runql-client-version.sh
+
       - name: Install bundled RunQL client
         run: ./dev/install-runql-client-release.sh "${RUNQL_CLIENT_VERSION}" "darwin-arm64" overlay stable
         if: env.RUNQL_CLIENT_VERSION != ''
