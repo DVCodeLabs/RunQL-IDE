@@ -1,0 +1,62 @@
+name: stable-all
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_version:
+        type: boolean
+        description: Force update version
+      generate_assets:
+        type: boolean
+        description: Generate assets
+      force_snap:
+        type: boolean
+        description: Force Snap for Linux
+      runql_client_version:
+        type: string
+        description: "RunQL extension version to bundle (blank uses latest release)"
+      checkout_pr:
+        type: string
+        description: Checkout PR
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch stable macOS workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run stable-macos.yml \
+            --ref main \
+            -f force_version=${{ github.event.inputs.force_version || 'false' }} \
+            -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
+            -f runql_client_version="${{ github.event.inputs.runql_client_version || '' }}" \
+            -f checkout_pr="${{ github.event.inputs.checkout_pr || '' }}"
+
+      - name: Dispatch stable Linux workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run stable-linux.yml \
+            --ref main \
+            -f force_version=${{ github.event.inputs.force_version || 'false' }} \
+            -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
+            -f force_snap=${{ github.event.inputs.force_snap || 'false' }} \
+            -f runql_client_version="${{ github.event.inputs.runql_client_version || '' }}" \
+            -f checkout_pr="${{ github.event.inputs.checkout_pr || '' }}"
+
+      - name: Dispatch stable Windows workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run stable-windows.yml \
+            --ref main \
+            -f force_version=${{ github.event.inputs.force_version || 'false' }} \
+            -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
+            -f runql_client_version="${{ github.event.inputs.runql_client_version || '' }}" \
+            -f checkout_pr="${{ github.event.inputs.checkout_pr || '' }}"
