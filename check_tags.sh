@@ -26,9 +26,14 @@ if [[ "${SHOULD_DEPLOY}" == "no" ]]; then
 else
   GITHUB_RESPONSE=$( curl -s -H "Authorization: token ${GITHUB_TOKEN}" "https://api.${GH_HOST}/repos/${ASSETS_REPOSITORY}/releases/latest" )
   LATEST_VERSION=$( echo "${GITHUB_RESPONSE}" | jq -c -r '.tag_name' )
+  LATEST_VERSION_NORMALIZED="${LATEST_VERSION#v}"
   RECHECK_ASSETS="${SHOULD_BUILD}"
 
-  if [[ "${LATEST_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-5]) ]]; then
+  if [[ -z "${LATEST_VERSION}" || "${LATEST_VERSION}" == "null" ]]; then
+    echo "No existing release found, treating this as the first release build"
+    export SHOULD_BUILD="yes"
+    ASSETS="null"
+  elif [[ "${LATEST_VERSION_NORMALIZED}" =~ ^([0-9]+\.[0-9]+\.[0-5]) ]]; then
     if [[ "${MS_TAG}" != "${BASH_REMATCH[1]}" ]]; then
       echo "New VSCode version, new build"
       export SHOULD_BUILD="yes"
@@ -47,7 +52,7 @@ else
     fi
 
     if [[ "${SHOULD_BUILD}" != "yes" ]]; then
-      export RELEASE_VERSION="${LATEST_VERSION}"
+      export RELEASE_VERSION="${LATEST_VERSION_NORMALIZED}"
       echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "${GITHUB_ENV}"
 
       echo "Switch to release version: ${RELEASE_VERSION}"
@@ -61,7 +66,7 @@ else
       ASSETS="null"
     fi
   else
-    echo "can't check assets"
+    echo "can't check assets for latest release tag '${LATEST_VERSION}'"
     exit 1
   fi
 fi
