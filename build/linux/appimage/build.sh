@@ -31,7 +31,7 @@ if [[ "${VSCODE_ARCH}" == "x64" ]]; then
   sed -i 's/grep docker/# grep docker/' pkg2appimage.AppDir/usr/share/pkg2appimage/functions.sh
 
   APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
-  APPLICATION_NAME="$( node -p "require(\"${CALLER_DIR}/vscode/product.json\").applicationName" )"
+  APPLICATION_NAME="$( node -p "require(\"${CALLER_DIR}/product.json\").applicationName" )"
 
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
     sed -i "s|@@NAME@@|${APP_NAME}-Insiders|g" recipe.yml
