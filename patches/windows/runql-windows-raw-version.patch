@@ -1,8 +1,8 @@
 diff --git a/build/gulpfile.vscode.win32.ts b/build/gulpfile.vscode.win32.ts
-index 3f9673a..8fdbf42 100644
+index 0f81323..416bdfc 100644
 --- a/build/gulpfile.vscode.win32.ts
 +++ b/build/gulpfile.vscode.win32.ts
-@@ -49,6 +49,33 @@ function packageInnoSetup(iss: string, options: { definitions?: Record<string, u
+@@ -59,6 +59,37 @@ function packageInnoSetup(iss: string, options: { definitions?: Record<string, u
  		});
  }
  
@@ -40,8 +40,7 @@ index 3f9673a..8fdbf42 100644
  function buildWin32Setup(arch: string, target: string): task.CallbackTask {
  	if (target !== 'system' && target !== 'user') {
  		throw new Error('Invalid setup target');
-@@ -86,7 +113,7 @@ function buildWin32Setup(arch: string, target: string): task.CallbackTask {
- 			NameLong: product.nameLong,
+@@ -87,7 +118,7 @@ function buildWin32Setup(arch: string, target: string): task.CallbackTask {
  			NameShort: product.nameShort,
  			DirName: product.win32DirName,
  			Version: pkg.version,
