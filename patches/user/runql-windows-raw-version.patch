@@ -1,0 +1,52 @@
+diff --git a/build/gulpfile.vscode.win32.ts b/build/gulpfile.vscode.win32.ts
+index 3f9673a..8fdbf42 100644
+--- a/build/gulpfile.vscode.win32.ts
++++ b/build/gulpfile.vscode.win32.ts
+@@ -49,6 +49,33 @@ function packageInnoSetup(iss: string, options: { definitions?: Record<string, u
+ 		});
+ }
+ 
++function encodeRunQLClientVersion(version: string): number {
++	const match = version.replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)$/);
++	if (!match) {
++		return 0;
++	}
++
++	const [, major, minor, patch] = match;
++	return (Number(major) * 10000) + (Number(minor) * 100) + Number(patch);
++}
++
++function getWindowsRawVersion(version: string): string {
++	const clean = version.replace(/-\w+$/, '');
++	const encodedMatch = clean.match(/^(\d+)\.(\d+)\.(\d{5})(\d{6})$/);
++	if (encodedMatch) {
++		return `${encodedMatch[1]}.${encodedMatch[2]}.${Number(encodedMatch[3])}.${Number(encodedMatch[4])}`;
++	}
++
++	const baseReleaseVersion = process.env['BASE_RELEASE_VERSION'];
++	const baseMatch = baseReleaseVersion?.match(/^(\d+)\.(\d+)\.(\d{5})$/);
++	if (baseMatch) {
++		return `${baseMatch[1]}.${baseMatch[2]}.${Number(baseMatch[3])}.${encodeRunQLClientVersion(process.env['RUNQL_CLIENT_VERSION'] ?? '')}`;
++	}
++
++	const semverMatch = clean.match(/^(\d+)\.(\d+)\.(\d+)$/);
++	if (semverMatch) {
++		return `${semverMatch[1]}.${semverMatch[2]}.${Number(semverMatch[3])}.0`;
++	}
++
++	return clean;
++}
++
+ function buildWin32Setup(arch: string, target: string): task.CallbackTask {
+ 	if (target !== 'system' && target !== 'user') {
+ 		throw new Error('Invalid setup target');
+@@ -86,7 +113,7 @@ function buildWin32Setup(arch: string, target: string): task.CallbackTask {
+ 			NameLong: product.nameLong,
+ 			NameShort: product.nameShort,
+ 			DirName: product.win32DirName,
+ 			Version: pkg.version,
+-			RawVersion: pkg.version.replace(/-\w+$/, ''),
++			RawVersion: getWindowsRawVersion(pkg.version),
+ 			Commit: commit,
+ 			NameVersion: product.win32NameVersion + (target === 'user' ? ' (User)' : ''),
+ 			ExeBasename: product.nameShort,
