@@ -9,16 +9,39 @@ cd "$( dirname "${BASH_SOURCE[0]}" )"
 WIN_SDK_MAJOR_VERSION="10"
 WIN_SDK_FULL_VERSION="10.0.17763.0"
 
+if [[ -z "${APP_NAME}" ]]; then
+  echo "Error: APP_NAME is not set. Ensure the workflow env defines it."
+  exit 1
+fi
+
+# Actual Windows executable basename, read from the merged product.json.
+# prepare_vscode.sh writes the final product.json under vscode/, which is where
+# gulp reads nameShort from to name the executable. We are currently cd'd into
+# build/windows/msi, so vscode/product.json is three levels up.
+WIN_EXE_NAME="$( node -p "require(\"../../../vscode/product.json\").nameShort" )"
+
+if [[ -z "${WIN_EXE_NAME}" || "${WIN_EXE_NAME}" == "undefined" ]]; then
+  echo "Error: could not read nameShort from ../../../vscode/product.json"
+  exit 1
+fi
+
+# Sanitize APP_NAME for use as a WiX identifier (stripped to alphanumerics).
+APP_NAME_CODE="${APP_NAME//[^A-Za-z0-9]/}"
+
 if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
-  PRODUCT_NAME="VSCodium - Insiders"
-  PRODUCT_CODE="VSCodiumInsiders"
-  PRODUCT_UPGRADE_CODE="1C9B7195-5A9A-43B3-B4BD-583E20498467"
+  PRODUCT_NAME="${APP_NAME} - Insiders"
+  PRODUCT_CODE="${APP_NAME_CODE}Insiders"
+  # RunQL insider upgrade code — distinct from upstream VSCodium-insiders to avoid
+  # MSI UpgradeCode collisions if both are ever installed on the same machine.
+  PRODUCT_UPGRADE_CODE="961BC5CC-9F56-49F8-A95F-0E3726C1CBD7"
   ICON_DIR="..\\..\\..\\src\\insider\\resources\\win32"
   SETUP_RESOURCES_DIR=".\\resources\\insider"
 else
-  PRODUCT_NAME="VSCodium"
-  PRODUCT_CODE="VSCodium"
-  PRODUCT_UPGRADE_CODE="965370CD-253C-4720-82FC-2E6B02A53808"
+  PRODUCT_NAME="${APP_NAME}"
+  PRODUCT_CODE="${APP_NAME_CODE}"
+  # RunQL stable upgrade code — distinct from upstream VSCodium's to avoid
+  # MSI UpgradeCode collisions if both are ever installed on the same machine.
+  PRODUCT_UPGRADE_CODE="7945326F-FE6A-4A71-803F-F4FE5354B5DF"
   ICON_DIR="..\\..\\..\\src\\stable\\resources\\win32"
   SETUP_RESOURCES_DIR=".\\resources\\stable"
 fi
@@ -35,9 +58,9 @@ LICENSE_DIR="..\\..\\..\\vscode"
 PROGRAM_FILES_86=$( env | sed -n 's/^ProgramFiles(x86)=//p' )
 
 if [[ -z "${1}" ]]; then
-	OUTPUT_BASE_FILENAME="VSCodium-${VSCODE_ARCH}-${RELEASE_VERSION}"
+	OUTPUT_BASE_FILENAME="${APP_NAME}-${VSCODE_ARCH}-${RELEASE_VERSION}"
 else
-	OUTPUT_BASE_FILENAME="VSCodium-${VSCODE_ARCH}-${1}-${RELEASE_VERSION}"
+	OUTPUT_BASE_FILENAME="${APP_NAME}-${VSCODE_ARCH}-${1}-${RELEASE_VERSION}"
 fi
 
 if [[ "${VSCODE_ARCH}" == "ia32" ]]; then
@@ -47,8 +70,12 @@ else
 fi
 
 sed -i "s|@@PRODUCT_UPGRADE_CODE@@|${PRODUCT_UPGRADE_CODE}|g" .\\includes\\vscodium-variables.wxi
-sed -i "s|@@PRODUCT_NAME@@|${PRODUCT_NAME}|g" .\\vscodium.xsl
+# The XSL uses @@PRODUCT_NAME@@ to match a <File Source="...\${NAME}.exe">. That
+# must be the actual on-disk executable name (product.json nameShort), which may
+# differ from PRODUCT_NAME (e.g. insider PRODUCT_NAME includes " - Insiders").
+sed -i "s|@@PRODUCT_NAME@@|${WIN_EXE_NAME}|g" .\\vscodium.xsl
 
+# The .wxl files hold user-visible strings, so they take the display name.
 find i18n -name '*.wxl' -print0 | xargs -0 sed -i "s|@@PRODUCT_NAME@@|${PRODUCT_NAME}|g"
 
 BuildSetupTranslationTransform() {
