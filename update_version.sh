@@ -17,6 +17,7 @@ fi
 
 # Support for GitHub Enterprise
 GH_HOST="${GH_HOST:-github.com}"
+VERSIONS_BRANCH="${VERSIONS_BRANCH:-main}"
 
 if [[ "${FORCE_UPDATE}" == "true" ]]; then
   . version.sh
@@ -193,7 +194,7 @@ fi
 
 cd "${REPOSITORY_NAME}" || { echo "'${REPOSITORY_NAME}' dir not found"; exit 1; }
 
-git pull origin master # in case another build just pushed
+git pull origin "${VERSIONS_BRANCH}" # in case another build just pushed
 git add .
 
 CHANGES=$( git status --porcelain )
@@ -205,9 +206,9 @@ if [[ -n "${CHANGES}" ]]; then
 
   git commit -m "CI update: ${dateAndMonth} (Build ${GITHUB_RUN_NUMBER})"
 
-  if ! git push origin master --quiet; then
-    git pull origin master
-    git push origin master --quiet
+  if ! git push origin "${VERSIONS_BRANCH}" --quiet; then
+    git pull origin "${VERSIONS_BRANCH}"
+    git push origin "${VERSIONS_BRANCH}" --quiet
   fi
 else
   echo "No changes"
