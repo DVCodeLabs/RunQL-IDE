@@ -91,6 +91,7 @@ if [[ "${SKIP_SOURCE}" == "no" ]]; then
   echo "MS_TAG=\"${MS_TAG}\"" > dev/build.env
   echo "MS_COMMIT=\"${MS_COMMIT}\"" >> dev/build.env
   echo "RELEASE_VERSION=\"${RELEASE_VERSION}\"" >> dev/build.env
+  echo "INSTALLER_VERSION=\"${INSTALLER_VERSION}\"" >> dev/build.env
   echo "BUILD_SOURCEVERSION=\"${BUILD_SOURCEVERSION}\"" >> dev/build.env
 else
   if [[ "${SKIP_ASSETS}" != "no" ]]; then
@@ -98,10 +99,12 @@ else
   fi
 
   . dev/build.env
+  export INSTALLER_VERSION
 
   echo "MS_TAG=\"${MS_TAG}\""
   echo "MS_COMMIT=\"${MS_COMMIT}\""
   echo "RELEASE_VERSION=\"${RELEASE_VERSION}\""
+  echo "INSTALLER_VERSION=\"${INSTALLER_VERSION}\""
   echo "BUILD_SOURCEVERSION=\"${BUILD_SOURCEVERSION}\""
 fi
 

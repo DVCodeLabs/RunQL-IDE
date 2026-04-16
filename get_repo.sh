@@ -18,6 +18,28 @@ encode_runql_client_version() {
   printf "%02d%02d%02d" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
 }
 
+# Derive a proper 4-part installer version (major.minor.build.revision) from
+# the encoded RELEASE_VERSION. This is the form fed to platform installers that
+# strictly validate Version parsing (MSI candle.exe, Inno Setup RawVersion,
+# update-check productVersion). Each component fits in Int32/UInt16.
+#
+# RELEASE_VERSION scheme: ${MS_MAJOR}.${MS_MINOR}.${MS_PATCH}${TIME_PATCH_4}${RUNQL_SUFFIX_6}[-insider]
+# e.g. 1.112.02539010502 -> 1.112.2539.10502
+compute_installer_version() {
+  local release_version="${1%-insider}"
+
+  if [[ "${release_version}" =~ ^([0-9]+)\.([0-9]+)\.[0-9]([0-9]{4})([0-9]{6})$ ]]; then
+    printf "%d.%d.%d.%d" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "$((10#${BASH_REMATCH[3]}))" "$((10#${BASH_REMATCH[4]}))"
+  elif [[ "${release_version}" =~ ^([0-9]+)\.([0-9]+)\.[0-9]([0-9]{4})$ ]]; then
+    printf "%d.%d.%d.0" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "$((10#${BASH_REMATCH[3]}))"
+  elif [[ "${release_version}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    printf "%d.%d.%d.0" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "$((10#${BASH_REMATCH[3]}))"
+  else
+    echo "Error: Unable to derive INSTALLER_VERSION from RELEASE_VERSION: ${1}" >&2
+    exit 1
+  fi
+}
+
 if [[ -z "${RUNQL_CLIENT_VERSION}" ]] && [[ -n "${RUNQL_CLIENT_TAG}" ]]; then
   RUNQL_CLIENT_VERSION="$(normalize_runql_client_version "${RUNQL_CLIENT_TAG}")"
 fi
@@ -94,7 +116,10 @@ else
   fi
 fi
 
+INSTALLER_VERSION=$( compute_installer_version "${RELEASE_VERSION}" )
+
 echo "RELEASE_VERSION=\"${RELEASE_VERSION}\""
+echo "INSTALLER_VERSION=\"${INSTALLER_VERSION}\""
 
 mkdir -p vscode
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
@@ -133,6 +158,7 @@ cd ..
 # for GH actions
 if [[ "${GITHUB_ENV}" ]]; then
   echo "BASE_RELEASE_VERSION=${BASE_RELEASE_VERSION}" >> "${GITHUB_ENV}"
+  echo "INSTALLER_VERSION=${INSTALLER_VERSION}" >> "${GITHUB_ENV}"
   echo "MS_TAG=${MS_TAG}" >> "${GITHUB_ENV}"
   echo "MS_COMMIT=${MS_COMMIT}" >> "${GITHUB_ENV}"
   echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "${GITHUB_ENV}"
@@ -141,6 +167,7 @@ if [[ "${GITHUB_ENV}" ]]; then
 fi
 
 export BASE_RELEASE_VERSION
+export INSTALLER_VERSION
 export MS_TAG
 export MS_COMMIT
 export RELEASE_VERSION

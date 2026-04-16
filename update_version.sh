@@ -96,16 +96,20 @@ generateJson() {
 }
 
 transformVersion() {
-  local version parts
+  local version
 
-  version="${1%-insider}"
-
-  IFS='.' read -r -a parts <<< "${version}"
-
-  # Remove leading zeros from third part
-  parts[2]="$((10#${parts[2]}))"
-
-  version="${parts[0]}.${parts[1]}.${parts[2]}.0"
+  # Prefer the pre-computed 4-part INSTALLER_VERSION when available so update
+  # clients see the same version string the MSI/Inno installers report.
+  if [[ -n "${INSTALLER_VERSION}" ]]; then
+    version="${INSTALLER_VERSION}"
+  else
+    local parts
+    version="${1%-insider}"
+    IFS='.' read -r -a parts <<< "${version}"
+    # Remove leading zeros from third part
+    parts[2]="$((10#${parts[2]}))"
+    version="${parts[0]}.${parts[1]}.${parts[2]}.0"
+  fi
 
   if [[ "${1}" == *-insider ]]; then
     version="${version}-insider"

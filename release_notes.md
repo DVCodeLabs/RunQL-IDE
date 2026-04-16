@@ -2,6 +2,7 @@ Based on VS Code [@@MS_TAG@@](@@MS_URL@@)
 
 - Bundled `RunQL` extension version: `@@RUNQL_CLIENT_VERSION@@`
 - Base VSCodium release version: `@@BASE_RELEASE_VERSION@@`
+- Installer version: `@@INSTALLER_VERSION@@`
 
 @@RELEASE_NOTES@@
 

@@ -39,6 +39,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     outputs:
+      INSTALLER_VERSION: ${{ env.INSTALLER_VERSION }}
       MS_COMMIT: ${{ env.MS_COMMIT }}
       MS_TAG: ${{ env.MS_TAG }}
       RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
@@ -77,6 +78,7 @@ jobs:
       run:
         shell: bash
     env:
+      INSTALLER_VERSION: ${{ needs.check.outputs.INSTALLER_VERSION }}
       MS_COMMIT: ${{ needs.check.outputs.MS_COMMIT }}
       MS_TAG: ${{ needs.check.outputs.MS_TAG }}
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
@@ -161,6 +163,7 @@ jobs:
         shell: bash
     env:
       BUILD_SOURCEVERSION: ${{ needs.compile.outputs.BUILD_SOURCEVERSION }}
+      INSTALLER_VERSION: ${{ needs.check.outputs.INSTALLER_VERSION }}
       MS_COMMIT: ${{ needs.check.outputs.MS_COMMIT }}
       MS_TAG: ${{ needs.check.outputs.MS_TAG }}
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}

@@ -22,6 +22,7 @@ APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
   VERSION="${RELEASE_VERSION%-insider}"
   DISPLAY_RUNQL_CLIENT_VERSION="${RUNQL_CLIENT_VERSION:-not bundled}"
   DISPLAY_BASE_RELEASE_VERSION="${BASE_RELEASE_VERSION:-${VERSION}}"
+  DISPLAY_INSTALLER_VERSION="${INSTALLER_VERSION:-${VERSION}}"
 
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
     NOTES="update vscode to [${MS_COMMIT}](https://github.com/microsoft/vscode/tree/${MS_COMMIT})"
@@ -32,6 +33,7 @@ APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
     replace "s|@@ASSETS_REPOSITORY@@|${ASSETS_REPOSITORY}|g" release_notes.md
     replace "s|@@BINARY_NAME@@|${BINARY_NAME}|g" release_notes.md
     replace "s|@@BASE_RELEASE_VERSION@@|${DISPLAY_BASE_RELEASE_VERSION}|g" release_notes.md
+    replace "s|@@INSTALLER_VERSION@@|${DISPLAY_INSTALLER_VERSION}|g" release_notes.md
     replace "s|@@MS_TAG@@|${MS_COMMIT}|g" release_notes.md
     replace "s|@@MS_URL@@|https://github.com/microsoft/vscode/tree/${MS_COMMIT}|g" release_notes.md
     replace "s|@@QUALITY@@|-insider|g" release_notes.md
@@ -51,6 +53,7 @@ APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
     replace "s|@@ASSETS_REPOSITORY@@|${ASSETS_REPOSITORY}|g" release_notes.md
     replace "s|@@BINARY_NAME@@|${BINARY_NAME}|g" release_notes.md
     replace "s|@@BASE_RELEASE_VERSION@@|${DISPLAY_BASE_RELEASE_VERSION}|g" release_notes.md
+    replace "s|@@INSTALLER_VERSION@@|${DISPLAY_INSTALLER_VERSION}|g" release_notes.md
     replace "s|@@MS_TAG@@|${MS_TAG}|g" release_notes.md
     replace "s|@@MS_URL@@|https://code.visualstudio.com/updates/v$( echo "${MS_TAG//./_}" | cut -d'_' -f 1,2 )|g" release_notes.md
     replace "s|@@QUALITY@@||g" release_notes.md
