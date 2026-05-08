@@ -35,6 +35,11 @@ else
 	export SHOULD_DEPLOY="yes"
 fi
 
+if [[ "${FORCE_NEW_RELEASE:-false}" == "true" ]]; then
+  echo "Forcing new release"
+  export NEW_RELEASE="true"
+fi
+
 if [[ "${GITHUB_ENV}" ]]; then
   echo "GITHUB_BRANCH=${GITHUB_BRANCH}" >> "${GITHUB_ENV}"
   echo "NEW_RELEASE=${NEW_RELEASE}" >> "${GITHUB_ENV}"

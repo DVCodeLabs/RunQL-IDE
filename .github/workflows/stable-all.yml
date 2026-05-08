@@ -6,6 +6,9 @@ on:
       force_version:
         type: boolean
         description: Force update version
+      force_new_release:
+        type: boolean
+        description: Force new IDE release for same VS Code base
       generate_assets:
         type: boolean
         description: Generate assets
@@ -35,6 +38,7 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref main \
             -f force_version=${{ github.event.inputs.force_version || 'false' }} \
+            -f force_new_release=${{ github.event.inputs.force_new_release || 'false' }} \
             -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
             -f runql_client_version="${{ github.event.inputs.runql_client_version || '' }}" \
             -f checkout_pr="${{ github.event.inputs.checkout_pr || '' }}"
@@ -47,6 +51,7 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref main \
             -f force_version=${{ github.event.inputs.force_version || 'false' }} \
+            -f force_new_release=${{ github.event.inputs.force_new_release || 'false' }} \
             -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
             -f force_snap=${{ github.event.inputs.force_snap || 'false' }} \
             -f runql_client_version="${{ github.event.inputs.runql_client_version || '' }}" \
@@ -60,6 +65,7 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref main \
             -f force_version=${{ github.event.inputs.force_version || 'false' }} \
+            -f force_new_release=${{ github.event.inputs.force_new_release || 'false' }} \
             -f generate_assets=${{ github.event.inputs.generate_assets || 'false' }} \
             -f runql_client_version="${{ github.event.inputs.runql_client_version || '' }}" \
             -f checkout_pr="${{ github.event.inputs.checkout_pr || '' }}"
