@@ -76,7 +76,7 @@ generateJson() {
 
   # check that nothing is blank (blank indicates something awry with build)
   for key in url name version productVersion sha1hash timestamp sha256hash; do
-    if [[ -z "${key}" ]]; then
+    if [[ -z "${!key}" ]]; then
       echo "Variable '${key}' is empty; exiting..."
       exit 1
     fi
@@ -98,22 +98,11 @@ generateJson() {
 transformVersion() {
   local version
 
-  # Prefer the pre-computed 4-part INSTALLER_VERSION when available so update
-  # clients see the same version string the MSI/Inno installers report.
-  if [[ -n "${INSTALLER_VERSION}" ]]; then
-    version="${INSTALLER_VERSION}"
-  else
-    local parts
-    version="${1%-insider}"
-    IFS='.' read -r -a parts <<< "${version}"
-    # Remove leading zeros from third part
-    parts[2]="$((10#${parts[2]}))"
-    version="${parts[0]}.${parts[1]}.${parts[2]}.0"
-  fi
-
-  if [[ "${1}" == *-insider ]]; then
-    version="${version}-insider"
-  fi
+  # The desktop update service compares this with productService.version, which
+  # comes from package.json and uses the encoded release version. Do not publish
+  # the 4-part installer version here; older clients truncate that format and can
+  # incorrectly decide a newer release is not an update.
+  version="${1%-insider}"
 
   echo "${version}"
 }
