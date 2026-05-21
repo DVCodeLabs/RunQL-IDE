@@ -9,9 +9,6 @@
 
 [![License](https://img.shields.io/github/license/DVCodeLabs/RunQL-IDE.svg)](https://github.com/DVCodeLabs/RunQL-IDE/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/release/DVCodeLabs/RunQL-IDE.svg)](https://github.com/DVCodeLabs/RunQL-IDE/releases)
-[![Build Linux](https://img.shields.io/github/actions/workflow/status/DVCodeLabs/RunQL-IDE/stable-linux.yml?branch=master&label=build%28linux%29)](https://github.com/DVCodeLabs/RunQL-IDE/actions/workflows/stable-linux.yml?query=branch%3Amaster)
-[![Build macOS](https://img.shields.io/github/actions/workflow/status/DVCodeLabs/RunQL-IDE/stable-macos.yml?branch=master&label=build%28macOS%29)](https://github.com/DVCodeLabs/RunQL-IDE/actions/workflows/stable-macos.yml?query=branch%3Amaster)
-[![Build Windows](https://img.shields.io/github/actions/workflow/status/DVCodeLabs/RunQL-IDE/stable-windows.yml?branch=master&label=build%28windows%29)](https://github.com/DVCodeLabs/RunQL-IDE/actions/workflows/stable-windows.yml?query=branch%3Amaster)
 
 </div>
 
@@ -31,6 +28,8 @@ For the product overview and open source details, see:
 - Index saved SQL so queries are searchable by title, tags, SQL, and metadata
 - Keep charts, schema snapshots, and docs in version control alongside application code
 - Support optional AI workflows with your provider of choice
+
+![RunQL product screenshot](./runql-assets/quickstart-run-sql.gif)
 
 ## Repositories
 
