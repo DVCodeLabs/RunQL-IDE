@@ -68,19 +68,21 @@ const guideUrl = 'https://github.com/DVCodeLabs/RunQL-IDE/blob/main/docs/ext-git
 if (!source.includes(guideUrl)) {
   const documentationNeedle = '"Getting Started Guide")),z.default.createElement("li",null,z.default.createElement("a",{style:p.link,href:"https://github.com/DVCodeLabs/RunQL",target:"_blank"},"Community & Support"))';
   const documentationReplacement = `"Getting Started Guide")),z.default.createElement("li",null,z.default.createElement("a",{style:p.link,href:"${guideUrl}",target:"_blank"},"GitHub Copilot in RunQL")),z.default.createElement("li",null,z.default.createElement("a",{style:p.link,href:"https://github.com/DVCodeLabs/RunQL",target:"_blank"},"Community & Support"))`;
-  if (!source.includes(documentationNeedle)) {
-    throw new Error('Could not find RunQL welcome documentation list insertion point.');
+  if (source.includes(documentationNeedle)) {
+    source = source.replace(documentationNeedle, documentationReplacement);
+  } else {
+    console.warn('RunQL welcome documentation list insertion point not found; skipping Copilot documentation-list link.');
   }
-  source = source.replace(documentationNeedle, documentationReplacement);
 }
 
 if (!source.includes('Using GitHub Copilot?')) {
   const settingsNeedle = 'z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:c},"\\\\u2699\\\\uFE0F Open RunQL Settings"),z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:f},"\\\\u{1F4D8} Open README_RUNQL.md")';
   const settingsReplacement = `z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:c},"\\\\u2699\\\\uFE0F Open RunQL Settings"),z.default.createElement("div",{style:{fontSize:"13px",color:"var(--vscode-descriptionForeground)",marginTop:"4px",marginBottom:"8px"}},"Using GitHub Copilot? See ",z.default.createElement("a",{style:{...p.link,display:"inline",padding:0},href:"${guideUrl}",target:"_blank"},"GitHub Copilot in RunQL"),"."),z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:f},"\\\\u{1F4D8} Open README_RUNQL.md")`;
-  if (!source.includes(settingsNeedle)) {
-    throw new Error('Could not find RunQL welcome settings guide insertion point.');
+  if (source.includes(settingsNeedle)) {
+    source = source.replace(settingsNeedle, settingsReplacement);
+  } else {
+    console.warn('RunQL welcome settings guide insertion point not found; skipping Copilot settings note.');
   }
-  source = source.replace(settingsNeedle, settingsReplacement);
 }
 
 fs.writeFileSync(file, source);
