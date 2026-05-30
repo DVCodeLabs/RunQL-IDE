@@ -25,6 +25,7 @@ If an extension you need is missing from Open VSX, your options are:
 - Ask the extension maintainer to publish to [Open VSX](https://open-vsx.org/).
 - Submit a pull request to [open-vsx/publish-extensions](https://github.com/open-vsx/publish-extensions).
 - Download a released `.vsix` from the extension’s source repository and install it manually.
+- Configure RunQL to use another extension gallery, if your organization accepts that gallery's terms.
 
 ## <a id="openvsx"></a>Open VSX in RunQL
 
@@ -38,12 +39,13 @@ You can point RunQL at a different gallery with environment variables:
 - `VSCODE_GALLERY_ITEM_URL`
 - `VSCODE_GALLERY_CACHE_URL`
 - `VSCODE_GALLERY_CONTROL_URL`
+- `VSCODE_GALLERY_LATEST_URL_TEMPLATE`
 - `VSCODE_GALLERY_EXTENSION_URL_TEMPLATE`
 - `VSCODE_GALLERY_RESOURCE_URL_TEMPLATE`
 
 You can also override the gallery in a user-level `product.json` under the RunQL config directory:
 
-- Windows: `%APPDATA%\\RunQL`
+- Windows: `%APPDATA%\RunQL`
 - macOS: `~/Library/Application Support/RunQL`
 - Linux: `$XDG_CONFIG_HOME/RunQL` or `~/.config/RunQL`
 
@@ -78,6 +80,26 @@ The Microsoft marketplace terms are specific about use with Microsoft products a
 If you choose to use it separately, review the applicable license and terms yourself:
 
 - [Visual Studio Marketplace Terms of Use](https://aka.ms/vsmarketplace-ToU)
+
+After you have reviewed those terms, create or update `product.json` in the RunQL config directory:
+
+- Windows: `%APPDATA%\RunQL\product.json`
+- macOS: `~/Library/Application Support/RunQL/product.json`
+- Linux: `$XDG_CONFIG_HOME/RunQL/product.json` or `~/.config/RunQL/product.json`
+
+Use:
+
+```json
+{
+  "extensionsGallery": {
+    "serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery",
+    "cacheUrl": "https://vscode.blob.core.windows.net/gallery/index",
+    "itemUrl": "https://marketplace.visualstudio.com/items"
+  }
+}
+```
+
+Restart RunQL after saving the file. Extensions that are published only to the Microsoft marketplace, including GitHub Copilot, should then appear in extension search.
 
 ## <a id="proprietary-debugging-tools"></a>Proprietary debugging tools
 

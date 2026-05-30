@@ -51,6 +51,42 @@ fs.writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);
 NODE
 }
 
+patch_welcome_app() {
+  local extension_dir="$1"
+  local welcome_app="${extension_dir}/dist/welcomeApp.js"
+
+  if [[ ! -f "${welcome_app}" ]]; then
+    return
+  fi
+
+  node - "${welcome_app}" <<'NODE'
+const fs = require('fs');
+const file = process.argv[2];
+let source = fs.readFileSync(file, 'utf8');
+const guideUrl = 'https://github.com/DVCodeLabs/RunQL-IDE/blob/main/docs/ext-github-copilot.md';
+
+if (!source.includes(guideUrl)) {
+  const documentationNeedle = '"Getting Started Guide")),z.default.createElement("li",null,z.default.createElement("a",{style:p.link,href:"https://github.com/DVCodeLabs/RunQL",target:"_blank"},"Community & Support"))';
+  const documentationReplacement = `"Getting Started Guide")),z.default.createElement("li",null,z.default.createElement("a",{style:p.link,href:"${guideUrl}",target:"_blank"},"GitHub Copilot in RunQL")),z.default.createElement("li",null,z.default.createElement("a",{style:p.link,href:"https://github.com/DVCodeLabs/RunQL",target:"_blank"},"Community & Support"))`;
+  if (!source.includes(documentationNeedle)) {
+    throw new Error('Could not find RunQL welcome documentation list insertion point.');
+  }
+  source = source.replace(documentationNeedle, documentationReplacement);
+}
+
+if (!source.includes('Using GitHub Copilot?')) {
+  const settingsNeedle = 'z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:c},"\\\\u2699\\\\uFE0F Open RunQL Settings"),z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:f},"\\\\u{1F4D8} Open README_RUNQL.md")';
+  const settingsReplacement = `z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:c},"\\\\u2699\\\\uFE0F Open RunQL Settings"),z.default.createElement("div",{style:{fontSize:"13px",color:"var(--vscode-descriptionForeground)",marginTop:"4px",marginBottom:"8px"}},"Using GitHub Copilot? See ",z.default.createElement("a",{style:{...p.link,display:"inline",padding:0},href:"${guideUrl}",target:"_blank"},"GitHub Copilot in RunQL"),"."),z.default.createElement("button",{style:{...p.button,...p.secondaryButton},onClick:f},"\\\\u{1F4D8} Open README_RUNQL.md")`;
+  if (!source.includes(settingsNeedle)) {
+    throw new Error('Could not find RunQL welcome settings guide insertion point.');
+  }
+  source = source.replace(settingsNeedle, settingsReplacement);
+}
+
+fs.writeFileSync(file, source);
+NODE
+}
+
 import_target() {
   local quality="$1"
   local dest="${ROOT_DIR}/src/${quality}/extensions/runql-client"
@@ -59,6 +95,7 @@ import_target() {
   mkdir -p "${dest}"
   cp -R "${TMP_DIR}/extension/." "${dest}/"
   patch_manifest "${dest}/package.json"
+  patch_welcome_app "${dest}"
 
   echo "Imported RunQL client into src/${quality}/extensions/runql-client"
 }

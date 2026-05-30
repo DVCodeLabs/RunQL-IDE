@@ -26,11 +26,12 @@ index 5a6c171..112b31b 100644
 +++ b/src/vs/platform/product/common/product.ts
 @@ -31,2 +31,15 @@ else if (globalThis._VSCODE_PRODUCT_JSON && globalThis._VSCODE_PACKAGE_JSON) {
  
-+	const { serviceUrl, controlUrl, itemUrl, latestUrlTemplate, extensionUrlTemplate, resourceUrlTemplate } = product.extensionsGallery || {};
++	const { serviceUrl, cacheUrl, controlUrl, itemUrl, latestUrlTemplate, extensionUrlTemplate, resourceUrlTemplate } = product.extensionsGallery || {};
 +
 +	Object.assign(product, {
 +		extensionsGallery: {
 +			serviceUrl: env['VSCODE_GALLERY_SERVICE_URL'] || serviceUrl,
++			cacheUrl: env['VSCODE_GALLERY_CACHE_URL'] || cacheUrl,
 +			controlUrl: env['VSCODE_GALLERY_CONTROL_URL'] || controlUrl,
 +			itemUrl: env['VSCODE_GALLERY_ITEM_URL'] || itemUrl,
 +			latestUrlTemplate: env['VSCODE_GALLERY_LATEST_URL_TEMPLATE'] || latestUrlTemplate,
