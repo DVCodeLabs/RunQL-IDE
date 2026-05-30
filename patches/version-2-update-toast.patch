@@ -1,0 +1,103 @@
+diff --git a/src/vs/workbench/contrib/update/browser/update.ts b/src/vs/workbench/contrib/update/browser/update.ts
+index 36f7d09..3cc7fe8 100644
+--- a/src/vs/workbench/contrib/update/browser/update.ts
++++ b/src/vs/workbench/contrib/update/browser/update.ts
+@@ -13,11 +13,11 @@ import { IOpenerService } from '../../../../platform/opener/common/opener.js';
+ import { IWorkbenchContribution } from '../../../common/contributions.js';
+ import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
+ import { IUpdateService, State as UpdateState, StateType, IUpdate, DisablementReason, Ready, Overwriting } from '../../../../platform/update/common/update.js';
+-import { INotificationService, INotificationHandle, NotificationPriority, Severity } from '../../../../platform/notification/common/notification.js';
++import { INotificationService, INotificationHandle, IPromptChoice, NotificationPriority, Severity } from '../../../../platform/notification/common/notification.js';
+ import { IDialogService } from '../../../../platform/dialogs/common/dialogs.js';
+ import { IBrowserWorkbenchEnvironmentService } from '../../../services/environment/browser/environmentService.js';
+ import { ReleaseNotesManager } from './releaseNotesEditor.js';
+-import { isMacintosh, isWeb, isWindows } from '../../../../base/common/platform.js';
++import { isMacintosh, isWeb } from '../../../../base/common/platform.js';
+ import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+ import { RawContextKey, IContextKey, IContextKeyService, ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';
+ import { MenuRegistry, MenuId, registerAction2, Action2 } from '../../../../platform/actions/common/actions.js';
+@@ -212,6 +212,7 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 	private state: UpdateState;
+ 	private readonly badgeDisposable = this._register(new MutableDisposable());
+ 	private overwriteNotificationHandle: INotificationHandle | undefined;
++	private promptedReadyUpdateVersion: string | undefined;
+ 	private updateStateContextKey: IContextKey<string>;
+ 	private majorMinorUpdateAvailableContextKey: IContextKey<boolean>;
+ 	private titleBarEnabled: boolean;
+@@ -446,7 +447,6 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 		if (this.titleBarEnabled) {
+ 			this.overwriteNotificationHandle?.progress.done();
+ 			this.overwriteNotificationHandle = undefined;
+-			return;
+ 		}
+ 
+ 		if (state.overwrite && this.overwriteNotificationHandle) {
+@@ -460,18 +460,23 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 				primary: [
+ 					toAction({
+ 						id: 'update.restartToUpdate',
+-						label: nls.localize('restartToUpdate2', "Restart to Update"),
++						label: nls.localize('updateNow', "Update Now"),
+ 						run: () => this.updateService.quitAndInstall()
++					}),
++					toAction({
++						id: 'update.updateOnNextRestart',
++						label: nls.localize('updateOnNextRestart', "Update on Next Restart"),
++						run: () => { }
+ 					})
+ 				]
+ 			});
+-		} else if ((isWindows && this.productService.target !== 'user') || this.shouldShowNotification()) {
++		} else if (this.shouldShowReadyUpdateNotification(state)) {
+ 
+-			const actions = [{
++			const actions: IPromptChoice[] = [{
+ 				label: nls.localize('updateNow', "Update Now"),
+ 				run: () => this.updateService.quitAndInstall()
+ 			}, {
+-				label: nls.localize('later', "Later"),
++				label: nls.localize('updateOnNextRestart', "Update on Next Restart"),
+ 				run: () => { }
+ 			}];
+ 
+@@ -479,6 +479,7 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 			if (productVersion) {
+ 				actions.push({
+ 					label: nls.localize('releaseNotes', "Release Notes"),
++					isSecondary: true,
+ 					run: () => {
+ 						this.instantiationService.invokeFunction(accessor => showReleaseNotes(accessor, productVersion));
+ 					}
+@@ -488,16 +489,30 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 			// windows user fast updates and mac
+ 			this.notificationService.prompt(
+ 				severity.Info,
+-				nls.localize('updateAvailableAfterRestart', "Restart {0} to apply the latest update.", this.productService.nameLong),
++				productVersion
++					? nls.localize('updateReadyWithVersion', "{0} {1} is ready to install.", this.productService.nameLong, productVersion)
++					: nls.localize('updateReady', "{0} update is ready to install.", this.productService.nameLong),
+ 				actions,
+ 				{
+ 					sticky: true,
+-					priority: NotificationPriority.OPTIONAL
++					priority: NotificationPriority.DEFAULT
+ 				}
+ 			);
+ 		}
+ 	}
+ 
++	private shouldShowReadyUpdateNotification(state: Ready): boolean {
++		const updateVersion = state.update.version || state.update.productVersion;
++
++		if (this.promptedReadyUpdateVersion === updateVersion) {
++			return false;
++		}
++
++		this.promptedReadyUpdateVersion = updateVersion;
++
++		return true;
++	}
++
+ 	// macOS overwrite update - overwriting
+ 	private onUpdateOverwriting(state: Overwriting): void {
+ 		if (this.titleBarEnabled) {
