@@ -24,7 +24,7 @@ diff --git a/src/vs/platform/product/common/product.ts b/src/vs/platform/product
 index 5a6c171..112b31b 100644
 --- a/src/vs/platform/product/common/product.ts
 +++ b/src/vs/platform/product/common/product.ts
-@@ -31,2 +31,15 @@ else if (globalThis._VSCODE_PRODUCT_JSON && globalThis._VSCODE_PACKAGE_JSON) {
+@@ -31,2 +31,16 @@ else if (globalThis._VSCODE_PRODUCT_JSON && globalThis._VSCODE_PACKAGE_JSON) {
  
 +	const { serviceUrl, cacheUrl, controlUrl, itemUrl, latestUrlTemplate, extensionUrlTemplate, resourceUrlTemplate } = product.extensionsGallery || {};
 +
