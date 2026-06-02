@@ -140,6 +140,11 @@ node build/lib/policies/policyGenerator.ts build/lib/policies/policyData.jsonc l
 
 npm run gulp "vscode-linux-${VSCODE_ARCH}-min-ci"
 
+if [[ -n "${RUNQL_CLIENT_VERSION}" ]] && [[ -n "${RUNQL_CLIENT_TARGET}" ]] && [[ ! -f "../VSCode-linux-${VSCODE_ARCH}/resources/app/extensions/runql-client/package.json" ]]; then
+  echo "Bundled RunQL client extension is missing from the Linux package" >&2
+  exit 1
+fi
+
 if [[ -f "../build/linux/${VSCODE_ARCH}/ripgrep.sh" ]]; then
   bash "../build/linux/${VSCODE_ARCH}/ripgrep.sh" "../VSCode-linux-${VSCODE_ARCH}/resources/app/node_modules"
 fi

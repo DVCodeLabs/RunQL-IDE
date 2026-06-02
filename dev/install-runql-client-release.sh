@@ -64,6 +64,7 @@ case "${MODE}" in
     ;;
   vscode)
     DEST_DIR="${ROOT_DIR}/vscode/extensions/runql-client"
+    BUILD_DEST_DIR="${ROOT_DIR}/vscode/.build/extensions/runql-client"
 
     if [[ ! -d "${ROOT_DIR}/vscode" ]]; then
       echo "Missing ${ROOT_DIR}/vscode directory" >&2
@@ -75,6 +76,12 @@ case "${MODE}" in
     cp -R "${IMPORT_DIR}/extension/." "${DEST_DIR}/"
     patch_manifest "${DEST_DIR}/package.json"
     prepare_extension_dir "${DEST_DIR}"
+
+    if [[ -d "${ROOT_DIR}/vscode/.build/extensions" ]]; then
+      rm -rf "${BUILD_DEST_DIR}"
+      mkdir -p "${BUILD_DEST_DIR}"
+      cp -R "${DEST_DIR}/." "${BUILD_DEST_DIR}/"
+    fi
     ;;
   *)
     echo "Invalid mode: ${MODE}" >&2

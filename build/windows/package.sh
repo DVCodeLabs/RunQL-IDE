@@ -37,6 +37,11 @@ node build/lib/policies/policyGenerator.ts build/lib/policies/policyData.jsonc w
 
 npm run gulp "vscode-win32-${VSCODE_ARCH}-min-ci"
 
+if [[ -n "${RUNQL_CLIENT_VERSION}" ]] && [[ -n "${RUNQL_CLIENT_TARGET}" ]] && [[ ! -f "../VSCode-win32-${VSCODE_ARCH}/resources/app/extensions/runql-client/package.json" ]]; then
+  echo "Bundled RunQL client extension is missing from the Windows package" >&2
+  exit 1
+fi
+
 . ../build_cli.sh
 
 if [[ "${VSCODE_ARCH}" == "x64" ]]; then
