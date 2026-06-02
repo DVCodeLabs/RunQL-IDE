@@ -24,6 +24,16 @@ VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:a
 
 export VSCODE_HOST_MOUNT VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME
 
+for i in {1..5}; do
+  sudo docker pull tonistiigi/binfmt:latest && break
+  if [[ $i == 5 ]]; then
+    echo "Docker pull failed too many times" >&2
+    exit 1
+  fi
+  echo "Docker pull failed $i, trying again..."
+  sleep $(( 15 * (i + 1)))
+done
+
 if [[ -d "../patches/alpine/reh/" ]]; then
   for file in "../patches/alpine/reh/"*.patch; do
     if [[ -f "${file}" ]]; then
