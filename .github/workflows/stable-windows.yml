@@ -93,6 +93,8 @@ jobs:
   compile:
     needs:
       - check
+    permissions:
+      contents: read
     runs-on: windows-2022
     defaults:
       run:
@@ -147,6 +149,7 @@ jobs:
 
       - name: Build
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOULD_BUILD_REH: 'no'
           SHOULD_BUILD_REH_WEB: 'no'
         run: ./build.sh
