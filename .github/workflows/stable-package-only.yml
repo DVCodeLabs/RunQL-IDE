@@ -1,0 +1,80 @@
+name: stable-package-only
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_version:
+        type: boolean
+        description: Force update version
+      force_new_release:
+        type: boolean
+        description: Force new IDE release for same VS Code base
+      generate_assets:
+        type: boolean
+        description: Generate assets
+      force_snap:
+        type: boolean
+        description: Force Snap for Linux
+      runql_client_version:
+        type: string
+        description: "RunQL extension version to bundle (blank uses latest release)"
+      checkout_pr:
+        type: string
+        description: Checkout PR
+  repository_dispatch:
+    types: [runql-client-release]
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    env:
+      CHECKOUT_PR: ${{ github.event.inputs.checkout_pr || '' }}
+      FORCE_NEW_RELEASE: ${{ github.event_name == 'repository_dispatch' && 'true' || (github.event.inputs.force_new_release || 'false') }}
+      FORCE_SNAP: ${{ github.event.inputs.force_snap || 'false' }}
+      FORCE_VERSION: ${{ github.event.inputs.force_version || 'false' }}
+      GENERATE_ASSETS: ${{ github.event.inputs.generate_assets || 'false' }}
+      RUNQL_CLIENT_VERSION: ${{ github.event.inputs.runql_client_version || github.event.client_payload.extension_version || github.event.client_payload.extension_tag || '' }}
+    steps:
+      - name: Dispatch stable macOS workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run stable-macos.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f force_version="${FORCE_VERSION}" \
+            -f force_new_release="${FORCE_NEW_RELEASE}" \
+            -f generate_assets="${GENERATE_ASSETS}" \
+            -f runql_client_version="${RUNQL_CLIENT_VERSION}" \
+            -f checkout_pr="${CHECKOUT_PR}"
+
+      - name: Dispatch stable Linux workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run stable-linux.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f force_version="${FORCE_VERSION}" \
+            -f force_new_release="${FORCE_NEW_RELEASE}" \
+            -f generate_assets="${GENERATE_ASSETS}" \
+            -f force_snap="${FORCE_SNAP}" \
+            -f runql_client_version="${RUNQL_CLIENT_VERSION}" \
+            -f checkout_pr="${CHECKOUT_PR}"
+
+      - name: Dispatch stable Windows workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run stable-windows.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f force_version="${FORCE_VERSION}" \
+            -f force_new_release="${FORCE_NEW_RELEASE}" \
+            -f generate_assets="${GENERATE_ASSETS}" \
+            -f runql_client_version="${RUNQL_CLIENT_VERSION}" \
+            -f checkout_pr="${CHECKOUT_PR}"

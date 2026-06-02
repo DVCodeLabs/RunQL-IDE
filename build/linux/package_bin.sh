@@ -14,9 +14,7 @@ tar -xzf ./vscode.tar.gz
 
 chown -R root:root vscode
 
-if [[ -n "${RUNQL_CLIENT_VERSION}" ]] && [[ -n "${RUNQL_CLIENT_TARGET}" ]]; then
-  ./dev/install-runql-client-release.sh "${RUNQL_CLIENT_VERSION}" "${RUNQL_CLIENT_TARGET}" vscode
-fi
+./dev/set-vscode-release-version.sh
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
@@ -133,6 +131,14 @@ node build/azure-pipelines/distro/mixin-npm.ts
 
 # delete native files built in the `compile` step
 find .build/extensions -type f -name '*.node' -print -delete
+
+cd ..
+
+if [[ -n "${RUNQL_CLIENT_VERSION}" ]] && [[ -n "${RUNQL_CLIENT_TARGET}" ]]; then
+  ./dev/install-runql-client-release.sh "${RUNQL_CLIENT_VERSION}" "${RUNQL_CLIENT_TARGET}" vscode
+fi
+
+cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
 # generate Group Policy definitions
 npm run copy-policy-dto --prefix build

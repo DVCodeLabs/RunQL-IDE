@@ -32,7 +32,7 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
 
     npm run gulp "vscode-darwin-${VSCODE_ARCH}-min-ci"
 
-    if [[ -n "${RUNQL_CLIENT_VERSION}" ]] && [[ ! -f "../VSCode-darwin-${VSCODE_ARCH}/RunQL.app/Contents/Resources/app/extensions/runql-client/package.json" ]]; then
+    if [[ -n "${RUNQL_CLIENT_VERSION}" ]] && [[ ! -f "../VSCode-darwin-${VSCODE_ARCH}/${APP_NAME}.app/Contents/Resources/app/extensions/runql-client/package.json" ]]; then
       echo "Bundled RunQL client extension is missing from the macOS package" >&2
       exit 1
     fi

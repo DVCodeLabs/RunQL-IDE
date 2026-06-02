@@ -18,8 +18,6 @@ on:
       checkout_pr:
         type: string
         description: Checkout PR
-  repository_dispatch:
-    types: [runql-client-release]
   push:
     branches: [ main ]
     paths-ignore:
@@ -49,16 +47,16 @@ env:
   VSCODE_QUALITY: stable
 
 jobs:
-  build:
-    runs-on: ${{ matrix.runner }}
-    env:
-      VSCODE_ARCH: ${{ matrix.vscode_arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: macos-15
-            vscode_arch: arm64
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      INSTALLER_VERSION: ${{ env.INSTALLER_VERSION }}
+      MS_COMMIT: ${{ env.MS_COMMIT }}
+      MS_TAG: ${{ env.MS_TAG }}
+      RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+      RUNQL_CLIENT_VERSION: ${{ env.RUNQL_CLIENT_VERSION }}
+      SHOULD_BUILD: ${{ env.SHOULD_BUILD }}
+      SHOULD_DEPLOY: ${{ env.SHOULD_DEPLOY }}
 
     steps:
       - uses: actions/checkout@v6
@@ -68,46 +66,168 @@ jobs:
       - name: Switch to relevant branch
         env:
           PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
-        run: . get_pr.sh
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-
-      - name: Setup Python 3
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.11'
+        run: ./get_pr.sh
 
       - name: Resolve bundled RunQL client version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash ./dev/resolve-runql-client-version.sh
 
-      - name: Install bundled RunQL client
-        run: ./dev/install-runql-client-release.sh "${RUNQL_CLIENT_VERSION}" "darwin-arm64" overlay stable
-        if: env.RUNQL_CLIENT_VERSION != ''
-
       - name: Clone VSCode repo
-        run: . get_repo.sh
+        run: ./get_repo.sh
 
       - name: Check PR or cron
         env:
           FORCE_NEW_RELEASE: ${{ github.event.inputs.force_new_release }}
           GENERATE_ASSETS: ${{ github.event.inputs.generate_assets }}
-        run: . check_cron_or_pr.sh
+        run: ./check_cron_or_pr.sh
 
       - name: Check existing VSCodium tags/releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: . check_tags.sh
+        run: ./check_tags.sh
         if: env.SHOULD_DEPLOY == 'yes'
+
+  compile:
+    needs:
+      - check
+    permissions:
+      contents: read
+    runs-on: macos-15
+    env:
+      INSTALLER_VERSION: ${{ needs.check.outputs.INSTALLER_VERSION }}
+      MS_COMMIT: ${{ needs.check.outputs.MS_COMMIT }}
+      MS_TAG: ${{ needs.check.outputs.MS_TAG }}
+      RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
+      RUNQL_CLIENT_VERSION: ${{ needs.check.outputs.RUNQL_CLIENT_VERSION }}
+      SHOULD_BUILD: ${{ (needs.check.outputs.SHOULD_BUILD == 'yes' || github.event.inputs.generate_assets == 'true') && 'yes' || 'no' }}
+      VSCODE_ARCH: arm64
+    outputs:
+      BUILD_SOURCEVERSION: ${{ env.BUILD_SOURCEVERSION }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.GITHUB_BRANCH }}
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Switch to relevant branch
+        env:
+          PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
+        run: ./get_pr.sh
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Compute base cache key
+        run: |
+          . ./version.sh
+          ./dev/compute-vscode-cache-key.sh
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Restore cached vscode base
+        id: base-cache
+        uses: actions/cache@v4
+        with:
+          path: vscode.tar.gz
+          key: ${{ env.BASE_VSCODE_CACHE_KEY }}
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+        if: env.SHOULD_BUILD == 'yes' && steps.base-cache.outputs.cache-hit != 'true'
+
+      - name: Setup Python 3
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+        if: env.SHOULD_BUILD == 'yes' && steps.base-cache.outputs.cache-hit != 'true'
+
+      - name: Clone VSCode repo
+        run: ./get_repo.sh
+        if: env.SHOULD_BUILD == 'yes' && steps.base-cache.outputs.cache-hit != 'true'
 
       - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./build.sh
+          SHOULD_BUILD_REH: 'no'
+          SHOULD_BUILD_REH_WEB: 'no'
+        run: ./build_vscode_base.sh
+        if: env.SHOULD_BUILD == 'yes' && steps.base-cache.outputs.cache-hit != 'true'
+
+      - name: Compress vscode artifact
+        run: |
+          find vscode -type f -not -path "*/node_modules/*" -not -path "vscode/.build/node/*" -not -path "vscode/.git/*" > vscode.txt
+          echo "vscode/.build/extensions/node_modules" >> vscode.txt
+          echo "vscode/.git" >> vscode.txt
+          tar -czf vscode.tar.gz -T vscode.txt
+        if: env.SHOULD_BUILD == 'yes' && steps.base-cache.outputs.cache-hit != 'true'
+
+      - name: Upload vscode artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode
+          path: ./vscode.tar.gz
+          retention-days: ${{ needs.check.outputs.SHOULD_DEPLOY == 'yes' && 30 || 1 }}
+        if: env.SHOULD_BUILD == 'yes'
+
+  build:
+    needs:
+      - check
+      - compile
+    runs-on: macos-15
+    env:
+      BUILD_SOURCEVERSION: ${{ needs.compile.outputs.BUILD_SOURCEVERSION }}
+      INSTALLER_VERSION: ${{ needs.check.outputs.INSTALLER_VERSION }}
+      MS_COMMIT: ${{ needs.check.outputs.MS_COMMIT }}
+      MS_TAG: ${{ needs.check.outputs.MS_TAG }}
+      RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
+      RUNQL_CLIENT_VERSION: ${{ needs.check.outputs.RUNQL_CLIENT_VERSION }}
+      RUNQL_CLIENT_TARGET: darwin-arm64
+      SHOULD_BUILD: ${{ (needs.check.outputs.SHOULD_BUILD == 'yes' || github.event.inputs.generate_assets == 'true') && 'yes' || 'no' }}
+      SHOULD_DEPLOY: ${{ needs.check.outputs.SHOULD_DEPLOY }}
+      VSCODE_ARCH: arm64
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.GITHUB_BRANCH }}
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Switch to relevant branch
+        env:
+          PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
+        run: ./get_pr.sh
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Setup Python 3
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Check existing VSCodium tags/releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./check_tags.sh
+        if: env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
+
+      - name: Download vscode artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./build/macos/package.sh
         if: env.SHOULD_BUILD == 'yes'
 
       - name: Prepare assets
@@ -132,12 +252,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.VERSIONS_REPOSITORY_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./update_version.sh
-        if: env.SHOULD_DEPLOY == 'yes' && env.HAS_VERSIONS_REPOSITORY_TOKEN == 'yes'
+        if: env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes' && env.HAS_VERSIONS_REPOSITORY_TOKEN == 'yes'
 
       - name: Upload assets
         uses: actions/upload-artifact@v7
         with:
-          name: bin-${{ matrix.vscode_arch }}
+          name: bin-arm64
           path: assets/
           retention-days: 3
         if: env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'no' && github.event.inputs.generate_assets == 'true'
