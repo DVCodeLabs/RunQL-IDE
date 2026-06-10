@@ -29,18 +29,14 @@ Based on VS Code [@@MS_TAG@@](@@MS_URL@@)
 
 ### Linux x64
 
-- [@@BINARY_NAME@@_@@VERSION@@_amd64.deb](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@BINARY_NAME@@_@@VERSION@@_amd64.deb)
-- [@@BINARY_NAME@@-@@VERSION@@-el8.x86_64.rpm](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@BINARY_NAME@@-@@VERSION@@-el8.x86_64.rpm)
+- [@@LINUX_PACKAGE_NAME@@_@@VERSION@@_amd64.deb](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@LINUX_PACKAGE_NAME@@_@@VERSION@@_amd64.deb)
+- [@@LINUX_PACKAGE_NAME@@-@@VERSION@@-el8.x86_64.rpm](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@LINUX_PACKAGE_NAME@@-@@VERSION@@-el8.x86_64.rpm)
 - [@@APP_NAME@@-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME@@-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz)
-- [@@APP_NAME_LC@@-reh-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME_LC@@-reh-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz)
-- [@@APP_NAME_LC@@-reh-web-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME_LC@@-reh-web-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz)
 - [@@APP_NAME_LC@@-cli-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME_LC@@-cli-linux-x64-@@VERSION@@@@QUALITY@@.tar.gz)
 
 ### Linux arm64
 
-- [@@BINARY_NAME@@_@@VERSION@@_arm64.deb](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@BINARY_NAME@@_@@VERSION@@_arm64.deb)
-- [@@BINARY_NAME@@-@@VERSION@@-el8.aarch64.rpm](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@BINARY_NAME@@-@@VERSION@@-el8.aarch64.rpm)
+- [@@LINUX_PACKAGE_NAME@@_@@VERSION@@_arm64.deb](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@LINUX_PACKAGE_NAME@@_@@VERSION@@_arm64.deb)
+- [@@LINUX_PACKAGE_NAME@@-@@VERSION@@-el8.aarch64.rpm](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@LINUX_PACKAGE_NAME@@-@@VERSION@@-el8.aarch64.rpm)
 - [@@APP_NAME@@-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME@@-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz)
-- [@@APP_NAME_LC@@-reh-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME_LC@@-reh-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz)
-- [@@APP_NAME_LC@@-reh-web-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME_LC@@-reh-web-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz)
 - [@@APP_NAME_LC@@-cli-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz](https://github.com/@@ASSETS_REPOSITORY@@/releases/download/@@VERSION@@@@QUALITY@@/@@APP_NAME_LC@@-cli-linux-arm64-@@VERSION@@@@QUALITY@@.tar.gz)
