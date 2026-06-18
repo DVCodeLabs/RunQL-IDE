@@ -23,8 +23,10 @@ encode_runql_client_version() {
 # strictly validate Version parsing (MSI candle.exe, Inno Setup RawVersion,
 # update-check productVersion). Each component fits in Int32/UInt16.
 #
-# RELEASE_VERSION scheme: ${MS_MAJOR}.${MS_MINOR}.${MS_PATCH}${TIME_PATCH_4}${RUNQL_SUFFIX_6}[-insider]
-# e.g. 1.112.02539010502 -> 1.112.2539.10502
+# RELEASE_VERSION scheme: ${BASE_RELEASE_VERSION}${RUNQL_SUFFIX_6}[-insider]
+# BASE_RELEASE_VERSION is read from upstream/${VSCODE_QUALITY}.json when
+# present, otherwise it falls back to ${MS_MAJOR}.${MS_MINOR}.${MS_PATCH}${TIME_PATCH_4}.
+# e.g. 1.121.03429010402 -> 1.121.3429.10402
 compute_installer_version() {
   local release_version="${1%-insider}"
 
@@ -61,8 +63,10 @@ if [[ -z "${RELEASE_VERSION}" ]]; then
     UPDATE_INFO=$( curl --silent --fail "https://update.code.visualstudio.com/api/update/darwin/${VSCODE_QUALITY}/0000000000000000000000000000000000000000" )
   else
     echo "Get version from ${VSCODE_QUALITY}.json"
-    MS_COMMIT=$( jq -r '.commit' "./upstream/${VSCODE_QUALITY}.json" )
-    MS_TAG=$( jq -r '.tag' "./upstream/${VSCODE_QUALITY}.json" )
+    UPSTREAM_JSON="./upstream/${VSCODE_QUALITY}.json"
+    MS_COMMIT=$( jq -r '.commit' "${UPSTREAM_JSON}" )
+    MS_TAG=$( jq -r '.tag' "${UPSTREAM_JSON}" )
+    UPSTREAM_RELEASE_VERSION=$( jq -r '.release // empty' "${UPSTREAM_JSON}" )
   fi
 
   if [[ -z "${MS_COMMIT}" ]]; then
@@ -74,13 +78,21 @@ if [[ -z "${RELEASE_VERSION}" ]]; then
     fi
   fi
 
-  TIME_PATCH=$( printf "%04d" $(($(date +%-j) * 24 + $(date +%-H))) )
+  if [[ -n "${UPSTREAM_RELEASE_VERSION}" ]]; then
+    if [[ "${UPSTREAM_RELEASE_VERSION:0:${#MS_TAG}}" != "${MS_TAG}" || ! "${UPSTREAM_RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-5][0-9]{4}$ ]]; then
+      echo "Error: Bad upstream release for ${MS_TAG}: ${UPSTREAM_RELEASE_VERSION}" >&2
+      exit 1
+    fi
+
+    BASE_RELEASE_VERSION="${UPSTREAM_RELEASE_VERSION}"
+  else
+    TIME_PATCH=$( printf "%04d" $(($(date +%-j) * 24 + $(date +%-H))) )
+    BASE_RELEASE_VERSION="${MS_TAG}${TIME_PATCH}"
+  fi
 
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
-    BASE_RELEASE_VERSION="${MS_TAG}${TIME_PATCH}"
     RELEASE_VERSION="${BASE_RELEASE_VERSION}-insider"
   else
-    BASE_RELEASE_VERSION="${MS_TAG}${TIME_PATCH}"
     RELEASE_VERSION="${BASE_RELEASE_VERSION}${RUNQL_CLIENT_SUFFIX}"
   fi
 else

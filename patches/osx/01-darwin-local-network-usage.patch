@@ -1,0 +1,67 @@
+diff --git a/build/darwin/sign.ts b/build/darwin/sign.ts
+index eb039d9..8131dc9 100644
+--- a/build/darwin/sign.ts
++++ b/build/darwin/sign.ts
+@@ -124,10 +124,10 @@ async function main(buildDir?: string): Promise<void> {
+ 			`${infoPlistPath}`
+ 		]);
+ 		await spawn('plutil', [
+-			'-insert',
++			'-replace',
+ 			'NSLocalNetworkUsageDescription',
+ 			'-string',
+-			'The app uses your local network for DNS resolution and to connect to locally running services.',
++			'RunQL requires local network access to allow you to connect to database hosts on your local network or VPN, establish secure SSH tunnels, forward localhost ports, and connect to your Docker containers.',
+ 			`${infoPlistPath}`
+ 		]);
+ 	}
+diff --git a/build/lib/electron.ts b/build/lib/electron.ts
+index d3f244e..eb112c0 100644
+--- a/build/lib/electron.ts
++++ b/build/lib/electron.ts
+@@ -5,6 +5,7 @@
+ 
+ import fs from 'fs';
+ import path from 'path';
++import { execFileSync } from 'child_process';
+ import vfs from 'vinyl-fs';
+ import filter from 'gulp-filter';
+ import * as util from './util.ts';
+@@ -37,6 +38,8 @@ function createTemplate(input: string): (params: Record<string, string>) => stri
+ 
+ const darwinCreditsTemplate = product.darwinCredits && createTemplate(fs.readFileSync(path.join(root, product.darwinCredits), 'utf8'));
+ 
++const darwinLocalNetworkUsageDescription = 'RunQL requires local network access to allow you to connect to database hosts on your local network or VPN, establish secure SSH tunnels, forward localhost ports, and connect to your Docker containers.';
++
+ /**
+  * Generate a `DarwinDocumentType` given a list of file extensions, an icon name, and an optional suffix or file type name.
+  * @param extensions A list of file extensions, such as `['bat', 'cmd']`
+@@ -229,10 +232,28 @@ function getElectron(arch: string): () => NodeJS.ReadWriteStream {
+ 	};
+ }
+ 
++function setDarwinInfoPlistString(infoPlistPath: string, key: string, value: string): void {
++	try {
++		execFileSync('/usr/libexec/PlistBuddy', ['-c', `Set :${key} ${value}`, infoPlistPath]);
++	} catch {
++		execFileSync('/usr/libexec/PlistBuddy', ['-c', `Add :${key} string ${value}`, infoPlistPath]);
++	}
++}
++
++function patchDarwinInfoPlist(): void {
++	if (process.platform !== 'darwin') {
++		return;
++	}
++
++	const infoPlistPath = path.join(root, '.build', 'electron', `${product.nameLong}.app`, 'Contents', 'Info.plist');
++	setDarwinInfoPlistString(infoPlistPath, 'NSLocalNetworkUsageDescription', darwinLocalNetworkUsageDescription);
++}
++
+ async function main(arch: string = process.arch): Promise<void> {
+ 	const electronPath = path.join(root, '.build', 'electron');
+ 	await util.rimraf(electronPath)();
+ 	await util.streamToPromise(getElectron(arch)());
++	patchDarwinInfoPlist();
+ }
+ 
+ if (import.meta.main) {

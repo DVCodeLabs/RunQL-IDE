@@ -5,7 +5,7 @@ index 0f81323..416bdfc 100644
 @@ -59,6 +59,21 @@ function packageInnoSetup(iss: string, options: { definitions?: Record<string, u
  		});
  }
-
+ 
 +function getWindowsRawVersion(version: string): string {
 +	const installerVersion = process.env['INSTALLER_VERSION'];
 +	if (installerVersion) {

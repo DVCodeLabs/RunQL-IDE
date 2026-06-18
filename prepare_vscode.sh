@@ -16,6 +16,8 @@ cp -f LICENSE vscode/LICENSE.txt
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
+# rm -rf extensions/copilot
+
 { set +x; } 2>/dev/null
 
 # {{{ product.json
@@ -129,6 +131,8 @@ setpath_json "product" "tunnelApplicationConfig" '{}'
 jsonTmp=$( jq -s '.[0] * .[1]' product.json ../product.json )
 echo "${jsonTmp}" > product.json && unset jsonTmp
 
+setpath "product" "webviewContentExternalBaseUrlTemplate" "https://{{uuid}}.vscode-cdn.net/${VSCODE_QUALITY}/${MS_COMMIT}/out/vs/workbench/contrib/webview/browser/pre/"
+
 cat product.json
 # }}}
 
@@ -147,8 +151,14 @@ echo "ORG_NAME=\"${ORG_NAME}\""
 echo "TUNNEL_APP_NAME=\"${TUNNEL_APP_NAME}\""
 
 if [[ "${DISABLE_UPDATE}" == "yes" ]]; then
-  mv ../patches/disable-update.patch.yet ../patches/disable-update.patch
+  mv ../patches/00-update-disable.patch.yet ../patches/00-update-disable.patch
 fi
+
+for file in ../patches/*.json; do
+  if [[ -f "${file}" ]]; then
+    apply_actions "${file}"
+  fi
+done
 
 for file in ../patches/*.patch; do
   if [[ -f "${file}" ]]; then

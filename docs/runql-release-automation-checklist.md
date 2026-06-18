@@ -15,7 +15,8 @@ This checklist tracks the work required so a `RunQL` extension release automatic
   - released `.vsix` assets
 - IDE release version format:
   - `<base_vscodium_release><extension_major_2digits><extension_minor_2digits><extension_patch_2digits>`
-  - example: `1.112.02387010402`
+  - example: `1.121.03429010402`
+  - the base release can be pinned in `upstream/stable.json` with `release`, for example `1.121.03429`
 
 ## RunQL-IDE Repo Work
 
