@@ -6,7 +6,7 @@ index 2c63e9e6..e98ed806 100644
  		},
 +		'update.minReleaseAge': {
 +			type: 'integer',
-+			default: 120,
++			default: 0,
 +			scope: ConfigurationScope.APPLICATION,
 +			description: localize('update.cooldown', "Control how old an update need to be before installing it (in hours)."),
 +		},
@@ -20,7 +20,7 @@ index d776f408..70b86dce 100644
 -				return Promise.resolve({ lastest, update });
 +				const minReleaseAge = this.configurationService.getValue<number>('update.minReleaseAge');
 +
-+				if(minReleaseAge === 0) {
++				if(explicit || minReleaseAge === 0) {
 +					return Promise.resolve({ lastest, update });
 +				}
 +

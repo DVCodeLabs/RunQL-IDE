@@ -1,0 +1,91 @@
+diff --git a/src/vs/platform/menubar/electron-main/menubar.ts b/src/vs/platform/menubar/electron-main/menubar.ts
+index c7a145e7..d12ef8e6 100644
+--- a/src/vs/platform/menubar/electron-main/menubar.ts
++++ b/src/vs/platform/menubar/electron-main/menubar.ts
+@@ -646,7 +646,7 @@ export class Menubar extends Disposable {
+ 
+ 			case StateType.AvailableForDownload:
+ 				return [new MenuItem({
+-					label: this.mnemonicLabel(nls.localize('miDownloadUpdate', "D&&ownload Available Update")), click: () => {
++					label: this.mnemonicLabel(nls.localize('miDownloadUpdate', "D&&ownload Now")), click: () => {
+ 						this.updateService.downloadUpdate(true);
+ 					}
+ 				})];
+@@ -668,7 +668,7 @@ export class Menubar extends Disposable {
+ 
+ 			case StateType.Ready:
+ 				return [new MenuItem({
+-					label: this.mnemonicLabel(nls.localize('miRestartToUpdate', "Restart to &&Update")), click: () => {
++					label: this.mnemonicLabel(nls.localize('miRestartToUpdate', "Restart &&Now")), click: () => {
+ 						this.reportMenuActionTelemetry('RestartToUpdate');
+ 						this.updateService.quitAndInstall();
+ 					}
+diff --git a/src/vs/workbench/contrib/update/browser/update.contribution.ts b/src/vs/workbench/contrib/update/browser/update.contribution.ts
+index 777207da..76c0fcb2 100644
+--- a/src/vs/workbench/contrib/update/browser/update.contribution.ts
++++ b/src/vs/workbench/contrib/update/browser/update.contribution.ts
+@@ -132,7 +132,7 @@ class DownloadUpdateAction extends Action2 {
+ 	constructor() {
+ 		super({
+ 			id: 'update.downloadUpdate',
+-			title: localize2('downloadUpdate', 'Download Update'),
++			title: localize2('downloadUpdate', 'Download Now'),
+ 			category: { value: product.nameShort, original: product.nameShort },
+ 			f1: true,
+ 			precondition: CONTEXT_UPDATE_STATE.isEqualTo(StateType.AvailableForDownload)
+@@ -164,7 +164,7 @@ class RestartToUpdateAction extends Action2 {
+ 	constructor() {
+ 		super({
+ 			id: 'update.restartToUpdate',
+-			title: localize2('restartToUpdate', 'Restart to Update'),
++			title: localize2('restartToUpdate', 'Restart Now'),
+ 			category: { value: product.nameShort, original: product.nameShort },
+ 			f1: true,
+ 			precondition: CONTEXT_UPDATE_STATE.isEqualTo(StateType.Ready)
+diff --git a/src/vs/workbench/contrib/update/browser/update.ts b/src/vs/workbench/contrib/update/browser/update.ts
+index c182b9c2..901463e0 100644
+--- a/src/vs/workbench/contrib/update/browser/update.ts
++++ b/src/vs/workbench/contrib/update/browser/update.ts
+@@ -101,7 +101,7 @@ export function appendUpdateMenuItems(menuId: MenuId, group: string): void {
+ 		group,
+ 		command: {
+ 			id: 'update.downloadNow',
+-			title: nls.localize('download update_1', "Download Update (1)")
++			title: nls.localize('download update_1', "Download Now (1)")
+ 		},
+ 		when: CONTEXT_UPDATE_STATE.isEqualTo(StateType.AvailableForDownload)
+ 	});
+@@ -140,7 +140,7 @@ export function appendUpdateMenuItems(menuId: MenuId, group: string): void {
+ 		order: 2,
+ 		command: {
+ 			id: 'update.restart',
+-			title: nls.localize('restartToUpdate', "Restart to Update (1)")
++			title: nls.localize('restartToUpdate', "Restart Now (1)")
+ 		},
+ 		when: CONTEXT_UPDATE_STATE.isEqualTo(StateType.Ready)
+ 	});
+diff --git a/src/vs/workbench/contrib/update/browser/updateTooltip.ts b/src/vs/workbench/contrib/update/browser/updateTooltip.ts
+index 85e34cca..f94f07ec 100644
+--- a/src/vs/workbench/contrib/update/browser/updateTooltip.ts
++++ b/src/vs/workbench/contrib/update/browser/updateTooltip.ts
+@@ -297,7 +297,7 @@ export class UpdateTooltip extends Disposable {
+ 
+ 	private renderAvailableForDownload({ update }: AvailableForDownload) {
+ 		this.renderTitleAndInfo(localize('updateTooltip.updateAvailableTitle', "Update Available"), update);
+-		this.renderActionButton(localize('updateTooltip.downloadButton', "Download"), 'update.downloadNow');
++		this.renderActionButton(localize('updateTooltip.downloadButton', "Download Now"), 'update.downloadNow');
+ 	}
+ 
+ 	private renderDownloading(state: Downloading) {
+@@ -349,9 +349,10 @@ export class UpdateTooltip extends Disposable {
+ 	private renderReady({ update }: Ready) {
+ 		if (this.configurationService.getValue<string>('update.mode') === 'manual') {
+ 			this.renderTitleAndInfo(localize('updateTooltip.updateInstalledTitle', "Update Installed"), update);
+-			this.renderActionButton(localize('updateTooltip.restartButton', "Restart"), 'update.restart');
++			this.renderActionButton(localize('updateTooltip.restartButton', "Restart Now"), 'update.restart');
+ 		} else {
+ 			this.renderTitleAndInfo(localize('updateTooltip.restartToUpdateTitle', "Restart to Update"), update);
++			this.renderActionButton(localize('updateTooltip.restartButton', "Restart Now"), 'update.restart');
+ 		}
+ 	}
+ 
