@@ -1,0 +1,99 @@
+diff --git a/src/vs/workbench/browser/parts/paneCompositeBar.ts b/src/vs/workbench/browser/parts/paneCompositeBar.ts
+index bc6003e2..428e660b 100644
+--- a/src/vs/workbench/browser/parts/paneCompositeBar.ts
++++ b/src/vs/workbench/browser/parts/paneCompositeBar.ts
+@@ -32,6 +32,17 @@ import { IPaneCompositePart } from './paneCompositePart.js';
+ import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
+ import { IViewsService } from '../../services/views/common/viewsService.js';
+ 
++// RunQL: Default known RunQL panel view containers to the front of the
++// bottom panel tab strip. Negative numbers sort before all built-in
++// containers, which start at 0 (Problems). Lower number = further left.
++const RUNQL_PANEL_ORDER: ReadonlyMap<string, number> = new Map([
++	['workbench.view.extension.runql-results', -40],
++	['workbench.view.extension.runql-erd', -30],
++	['workbench.view.extension.runql-markdown', -20],
++	['workbench.view.extension.runql-memory-recall', -10],
++]);
++const RUNQL_PANEL_ORDER_MIGRATION_STORAGE_KEY = 'runql.panelOrderMigrated';
++
+ interface IPlaceholderViewContainer {
+ 	readonly id: string;
+ 	readonly name?: string;
+@@ -122,10 +133,10 @@ export class PaneCompositeBar extends Disposable {
+ 				id: container.id,
+ 				name: container.name,
+ 				visible: !this.shouldBeHidden(container.id, container),
+-				order: container.order,
++				order: this.getEffectiveOrder(container.id, container.order),
+ 				pinned: container.pinned,
+ 			}));
+-		this.compositeBar = this.createCompositeBar(cachedItems);
++		this.compositeBar = this.createCompositeBar(this.migrateRunQLPanelOrderOnce(cachedItems));
+ 		this.onDidRegisterViewContainers(this.getViewContainers());
+ 		this.registerListeners();
+ 	}
+@@ -459,7 +470,7 @@ export class PaneCompositeBar extends Disposable {
+ 	}
+ 
+ 	private addComposite(viewContainer: ViewContainer): void {
+-		this.compositeBar.addComposite({ id: viewContainer.id, name: typeof viewContainer.title === 'string' ? viewContainer.title : viewContainer.title.value, order: viewContainer.order, requestedIndex: viewContainer.requestedIndex });
++		this.compositeBar.addComposite({ id: viewContainer.id, name: typeof viewContainer.title === 'string' ? viewContainer.title : viewContainer.title.value, order: this.getEffectiveOrder(viewContainer.id, viewContainer.order), requestedIndex: viewContainer.requestedIndex });
+ 	}
+ 
+ 	private hideComposite(compositeId: string): void {
+@@ -524,6 +535,36 @@ export class PaneCompositeBar extends Disposable {
+ 		return this.viewDescriptorService.getViewContainersByLocation(this.location);
+ 	}
+ 
++	private getEffectiveOrder(id: string, fallback: number | undefined): number | undefined {
++		if (this.location === ViewContainerLocation.Panel) {
++			const order = RUNQL_PANEL_ORDER.get(id);
++			if (order !== undefined) {
++				return order;
++			}
++		}
++		return fallback;
++	}
++
++	private migrateRunQLPanelOrderOnce<T extends { id: string; order?: number }>(items: readonly T[]): T[] {
++		const withEffectiveOrder = items.map(item => ({
++			...item,
++			order: this.getEffectiveOrder(item.id, item.order),
++		} as T));
++
++		if (this.location !== ViewContainerLocation.Panel || this.storageService.getBoolean(RUNQL_PANEL_ORDER_MIGRATION_STORAGE_KEY, StorageScope.PROFILE, false)) {
++			return withEffectiveOrder;
++		}
++
++		this.storageService.store(RUNQL_PANEL_ORDER_MIGRATION_STORAGE_KEY, true, StorageScope.PROFILE, StorageTarget.USER);
++
++		const runqlItems = Array.from(RUNQL_PANEL_ORDER.keys())
++			.map(id => withEffectiveOrder.find(item => item.id === id))
++			.filter((item): item is T => !!item);
++
++		const otherItems = withEffectiveOrder.filter(item => !RUNQL_PANEL_ORDER.has(item.id));
++		return [...runqlItems, ...otherItems];
++	}
++
+ 	private updateCompositeBarItemsFromStorage(retainExisting: boolean): void {
+ 		if (this.pinnedViewContainersValue === this.getStoredPinnedViewContainersValue()) {
+ 			return;
+@@ -540,7 +581,7 @@ export class PaneCompositeBar extends Disposable {
+ 			newCompositeItems.push({
+ 				id: cachedViewContainer.id,
+ 				name: cachedViewContainer.name,
+-				order: cachedViewContainer.order,
++				order: this.getEffectiveOrder(cachedViewContainer.id, cachedViewContainer.order),
+ 				pinned: cachedViewContainer.pinned,
+ 				visible: cachedViewContainer.visible && !!this.getViewContainer(cachedViewContainer.id),
+ 			});
+@@ -563,7 +604,7 @@ export class PaneCompositeBar extends Disposable {
+ 					newCompositeItems.push({
+ 						id: viewContainer.id,
+ 						name: typeof viewContainer.title === 'string' ? viewContainer.title : viewContainer.title.value,
+-						order: viewContainer.order,
++						order: this.getEffectiveOrder(viewContainer.id, viewContainer.order),
+ 						pinned: true,
+ 						visible: !this.shouldBeHidden(viewContainer),
+ 					});
