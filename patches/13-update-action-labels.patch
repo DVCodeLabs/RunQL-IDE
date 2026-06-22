@@ -43,9 +43,18 @@ index 777207da..76c0fcb2 100644
  			f1: true,
  			precondition: CONTEXT_UPDATE_STATE.isEqualTo(StateType.Ready)
 diff --git a/src/vs/workbench/contrib/update/browser/update.ts b/src/vs/workbench/contrib/update/browser/update.ts
-index c182b9c2..901463e0 100644
+index c182b9c2..b93a9cc8 100644
 --- a/src/vs/workbench/contrib/update/browser/update.ts
 +++ b/src/vs/workbench/contrib/update/browser/update.ts
+@@ -12,7 +12,7 @@ import { IInstantiationService, ServicesAccessor } from '../../../../platform/in
+ import { IOpenerService } from '../../../../platform/opener/common/opener.js';
+ import { IWorkbenchContribution } from '../../../common/contributions.js';
+ import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
+-import { IUpdateService, State as UpdateState, StateType } from '../../../../platform/update/common/update.js';
++import { IUpdate, IUpdateService, State as UpdateState, StateType } from '../../../../platform/update/common/update.js';
+ import { INotificationService, NotificationPriority, Severity } from '../../../../platform/notification/common/notification.js';
+ import { IDialogService } from '../../../../platform/dialogs/common/dialogs.js';
+ import { IBrowserWorkbenchEnvironmentService } from '../../../services/environment/browser/environmentService.js';
 @@ -101,7 +101,7 @@ export function appendUpdateMenuItems(menuId: MenuId, group: string): void {
  		group,
  		command: {
@@ -64,6 +73,91 @@ index c182b9c2..901463e0 100644
  		},
  		when: CONTEXT_UPDATE_STATE.isEqualTo(StateType.Ready)
  	});
+@@ -209,10 +209,12 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 	private readonly badgeDisposable = this._register(new MutableDisposable());
+ 	private updateStateContextKey: IContextKey<string>;
+ 	private majorMinorUpdateAvailableContextKey: IContextKey<boolean>;
++	private lastUpdateNotificationKey: string | undefined;
+ 
+ 	constructor(
+ 		@IStorageService storageService: IStorageService,
+ 		@IInstantiationService private readonly instantiationService: IInstantiationService,
++		@INotificationService private readonly notificationService: INotificationService,
+ 		@IUpdateService private readonly updateService: IUpdateService,
+ 		@IActivityService private readonly activityService: IActivityService,
+ 		@IContextKeyService contextKeyService: IContextKeyService,
+@@ -261,6 +263,8 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 			}
+ 		}
+ 
++		this.maybeShowUpdateNotification(state);
++
+ 		let badge: IBadge | undefined = undefined;
+ 
+ 		if (state.type === StateType.AvailableForDownload || state.type === StateType.Downloaded || state.type === StateType.Ready) {
+@@ -282,6 +286,62 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
+ 		this.state = state;
+ 	}
+ 
++	private maybeShowUpdateNotification(state: UpdateState): void {
++		switch (state.type) {
++			case StateType.AvailableForDownload:
++				this.showUpdateNotification(
++					state.type,
++					state.update,
++					nls.localize('thereIsUpdateAvailable', "There is a new {0} update available.", this.productService.nameLong),
++					nls.localize('download update', "Download Now"),
++					() => this.updateService.downloadUpdate(true)
++				);
++				break;
++
++			case StateType.Ready:
++				this.showUpdateNotification(
++					state.type,
++					state.update,
++					nls.localize('updateAvailableAfterRestart', "Restart {0} to apply the latest update.", this.productService.nameLong),
++					nls.localize('restartNow', "Restart Now"),
++					() => this.updateService.quitAndInstall()
++				);
++				break;
++		}
++	}
++
++	private showUpdateNotification(stateType: StateType, update: IUpdate, message: string, primaryLabel: string, primaryAction: () => void): void {
++		const version = update.productVersion ?? update.version;
++		const notificationKey = `${stateType}:${version}`;
++
++		if (this.lastUpdateNotificationKey === notificationKey) {
++			return;
++		}
++
++		this.lastUpdateNotificationKey = notificationKey;
++
++		const actions = [{
++			label: primaryLabel,
++			run: primaryAction
++		}];
++
++		if (update.productVersion) {
++			actions.push({
++				label: nls.localize('releaseNotes', "Release Notes"),
++				run: () => {
++					this.instantiationService.invokeFunction(accessor => showReleaseNotes(accessor, update.productVersion!));
++				}
++			});
++		}
++
++		this.notificationService.prompt(
++			severity.Info,
++			message,
++			actions,
++			{ sticky: true, priority: NotificationPriority.DEFAULT }
++		);
++	}
++
+ 	private registerGlobalActivityActions(): void {
+ 		CommandsRegistry.registerCommand('update.check', () => this.updateService.checkForUpdates(true));
+ 		CommandsRegistry.registerCommand('update.checking', () => { });
 diff --git a/src/vs/workbench/contrib/update/browser/updateTooltip.ts b/src/vs/workbench/contrib/update/browser/updateTooltip.ts
 index 85e34cca..f94f07ec 100644
 --- a/src/vs/workbench/contrib/update/browser/updateTooltip.ts

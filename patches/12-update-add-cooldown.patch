@@ -2,37 +2,43 @@ diff --git a/src/vs/platform/update/common/update.config.contribution.ts b/src/v
 index 2c63e9e6..e98ed806 100644
 --- a/src/vs/platform/update/common/update.config.contribution.ts
 +++ b/src/vs/platform/update/common/update.config.contribution.ts
-@@ -65,2 +65,8 @@ configurationRegistry.registerConfiguration({
+@@ -65,2 +65,10 @@ configurationRegistry.registerConfiguration({
  		},
 +		'update.minReleaseAge': {
 +			type: 'integer',
-+			default: 0,
++			default: 5,
++			minimum: 0,
++			maximum: 5,
 +			scope: ConfigurationScope.APPLICATION,
-+			description: localize('update.cooldown', "Control how old an update need to be before installing it (in hours)."),
++			description: localize('update.cooldown', "Control how old an update needs to be before installing it, in minutes. Values above 5 minutes are capped."),
 +		},
  		'update.enableWindowsBackgroundUpdates': {
 diff --git a/src/vs/platform/update/electron-main/abstractUpdateService.ts b/src/vs/platform/update/electron-main/abstractUpdateService.ts
 index d776f408..70b86dce 100644
 --- a/src/vs/platform/update/electron-main/abstractUpdateService.ts
 +++ b/src/vs/platform/update/electron-main/abstractUpdateService.ts
-@@ -459,3 +459,26 @@ export abstract class AbstractUpdateService implements IUpdateService {
+@@ -459,3 +459,30 @@ export abstract class AbstractUpdateService implements IUpdateService {
  
 -				return Promise.resolve({ lastest, update });
-+				const minReleaseAge = this.configurationService.getValue<number>('update.minReleaseAge');
++				const configuredMinReleaseAge = this.configurationService.getValue<number>('update.minReleaseAge');
++				const minReleaseAge = Math.min(Math.max(configuredMinReleaseAge ?? 0, 0), 5);
 +
 +				if(explicit || minReleaseAge === 0) {
 +					return Promise.resolve({ lastest, update });
 +				}
 +
-+				const releaseDate = update.timestamp ? new Date(Number.parseInt(String(update.timestamp), 10)) : null;
++				const releaseTimestamp = Number.parseInt(String(update.timestamp ?? ''), 10);
++				const releaseTimestampMillis = releaseTimestamp > 0 && releaseTimestamp < 10000000000 ? releaseTimestamp * 1000 : releaseTimestamp;
++				const releaseDate = Number.isFinite(releaseTimestampMillis) ? new Date(releaseTimestampMillis) : null;
 +
 +				this.logService.info(`update#isLatestVersion() - releaseDate: ${releaseDate}`);
 +
 +				if(!releaseDate || isNaN(releaseDate.getTime())) {
-+					return Promise.resolve(undefined);
++					this.logService.warn('update#isLatestVersion() - missing/invalid timestamp, proceeding without cooldown');
++					return Promise.resolve({ lastest, update });
 +				}
 +
-+				const age = Math.round(Math.abs(Date.now() - releaseDate.getTime()) / (1000 * 60 * 60));
++				const age = Math.max(0, Math.floor((Date.now() - releaseDate.getTime()) / (1000 * 60)));
 +
 +				this.logService.info(`update#isLatestVersion() - releaseAge: ${age}, minReleaseAge: ${minReleaseAge}`);
 +
