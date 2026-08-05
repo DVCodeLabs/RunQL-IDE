@@ -1062,21 +1062,3 @@ index 3b3d1db3..99a77e5a 100644
      "@electron/get": "^2.0.0",
 -    "@electron/osx-sign": "^2.0.0",
      "@types/ansi-colors": "^3.2.0",
-diff --git a/package.json b/package.json
-index 79f619ca..948b9313 100644
---- a/package.json
-+++ b/package.json
-@@ -260,3 +260,3 @@
-     "ssh2": {
--      "cpu-features": "0.0.0"
-+      "cpu-features": "0.0.10"
-     }
-diff --git a/remote/package.json b/remote/package.json
-index 1544b4c9..bed3fa7f 100644
---- a/remote/package.json
-+++ b/remote/package.json
-@@ -56,3 +56,3 @@
-     "ssh2": {
--      "cpu-features": "0.0.0"
-+      "cpu-features": "0.0.10"
-     }

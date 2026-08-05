@@ -21,8 +21,11 @@ export VSCODE_SKIP_NODE_VERSION_CHECK=1
 
 VSCODE_HOST_MOUNT="$( pwd )"
 VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:alpine-${VSCODE_ARCH}"
+VSCODE_NPMRC_PATH="${VSCODE_NPMRC_PATH:-$( npm config get userconfig )}"
 
-export VSCODE_HOST_MOUNT VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME
+touch "${VSCODE_NPMRC_PATH}"
+
+export VSCODE_HOST_MOUNT VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME VSCODE_NPMRC_PATH
 
 for i in {1..5}; do
   sudo docker pull tonistiigi/binfmt:latest && break
