@@ -1062,3 +1062,27 @@ index 3b3d1db3..99a77e5a 100644
      "@electron/get": "^2.0.0",
 -    "@electron/osx-sign": "^2.0.0",
      "@types/ansi-colors": "^3.2.0",
+diff --git a/package-lock.json b/package-lock.json
+index 6b02f00b..8db4b8df 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -17356,4 +17356,7 @@
+         "nan": "^2.23.0"
+       }
++    },
++    "node_modules/ssh2/node_modules/cpu-features": {
++      "optional": true
+     },
+     "node_modules/ssri": {
+diff --git a/remote/package-lock.json b/remote/package-lock.json
+index 93c685af..9836398e 100644
+--- a/remote/package-lock.json
++++ b/remote/package-lock.json
+@@ -1565,4 +1565,7 @@
+         "nan": "^2.23.0"
+       }
++    },
++    "node_modules/ssh2/node_modules/cpu-features": {
++      "optional": true
+     },
+     "node_modules/string_decoder": {
