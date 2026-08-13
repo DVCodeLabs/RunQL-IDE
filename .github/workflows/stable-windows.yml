@@ -191,6 +191,10 @@ jobs:
       - check
       - compile
     runs-on: windows-2022
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -206,7 +210,7 @@ jobs:
       MS_TAG: ${{ needs.check.outputs.MS_TAG }}
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
       RUNQL_CLIENT_VERSION: ${{ needs.check.outputs.RUNQL_CLIENT_VERSION }}
-      SIGN_WINDOWS: ${{ secrets.SIGNPATH_API_TOKEN != '' && secrets.SIGNPATH_ORGANIZATION_ID != '' && secrets.SIGNPATH_PROJECT_SLUG != '' && secrets.SIGNPATH_POLICY_SLUG != '' && 'yes' || 'no' }}
+      SIGN_WINDOWS: ${{ vars.AZURE_CLIENT_ID != '' && vars.TRUSTED_SIGNING_ENDPOINT != '' && vars.TRUSTED_SIGNING_ACCOUNT_NAME != '' && vars.TRUSTED_SIGNING_CERT_PROFILE != '' && 'yes' || 'no' }}
       SHOULD_BUILD: ${{ (needs.check.outputs.SHOULD_BUILD == 'yes' || github.event.inputs.generate_assets == 'true') && 'yes' || 'no' }}
       SHOULD_DEPLOY: ${{ needs.check.outputs.SHOULD_DEPLOY }}
       RUNQL_CLIENT_TARGET: win32-x64
@@ -264,34 +268,29 @@ jobs:
         run: ./prepare_assets.sh
         if: env.SHOULD_BUILD == 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
 
-      - name: Upload unsigned artifacts
-        id: upload-unsigned-artifacts
-        uses: actions/upload-artifact@v7
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
         with:
-          name: unsigned-${{ matrix.vscode_arch }}
-          path: |
-            assets/*.exe
-            assets/*.msi
-          retention-days: 1
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
         if: env.SHOULD_BUILD == 'yes' && env.SIGN_WINDOWS == 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
 
-      - name: Signing
-        uses: signpath/github-action-submit-signing-request@v2
+      - name: Sign Windows artifacts with Trusted Signing
+        uses: azure/trusted-signing-action@v0
         with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
-          signing-policy-slug: ${{ secrets.SIGNPATH_POLICY_SLUG }}
-          github-artifact-id: ${{ steps.upload-unsigned-artifacts.outputs.artifact-id }}
-          artifact-configuration-slug: ${{ matrix.vscode_arch }}
-          wait-for-completion: true
-          # 8h to manually approve the request
-          wait-for-completion-timeout-in-seconds: 28800
-          output-artifact-directory: assets/
+          endpoint: ${{ vars.TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ vars.TRUSTED_SIGNING_ACCOUNT_NAME }}
+          certificate-profile-name: ${{ vars.TRUSTED_SIGNING_CERT_PROFILE }}
+          files-folder: assets
+          files-folder-filter: exe,msi
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
         if: env.SHOULD_BUILD == 'yes' && env.SIGN_WINDOWS == 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
 
       - name: Continue without Windows signing
-        run: echo "SignPath secrets are not configured. Continuing with unsigned Windows artifacts."
+        run: echo "Trusted Signing variables are not configured. Continuing with unsigned Windows artifacts."
         if: env.SHOULD_BUILD == 'yes' && env.SIGN_WINDOWS != 'yes' && (env.SHOULD_DEPLOY == 'yes' || github.event.inputs.generate_assets == 'true')
 
       - name: Prepare checksums
