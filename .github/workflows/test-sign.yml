@@ -16,15 +16,14 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path signing-test -Force | Out-Null
-          $src = @'
-          public class HelloSign {
-              public static void Main() {
-                  System.Console.WriteLine("hi from trusted signing test");
-              }
-          }
-          '@
-          Add-Type -TypeDefinition $src -OutputType ConsoleApplication -OutputAssembly signing-test\HelloSign.exe
-          Get-Item signing-test\HelloSign.exe | Format-List Name, Length, FullName
+          New-Item -ItemType Directory -Path hello-src -Force | Out-Null
+          Push-Location hello-src
+          dotnet new console -n HelloSign --force | Out-Null
+          Push-Location HelloSign
+          dotnet publish -c Release -r win-x64 --self-contained false -o ..\..\signing-test | Out-Null
+          Pop-Location
+          Pop-Location
+          Get-ChildItem signing-test\HelloSign.exe | Format-List Name, Length, FullName
 
       - name: Confirm binary is unsigned before signing
         shell: pwsh
