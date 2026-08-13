@@ -23,10 +23,12 @@ on:
     paths-ignore:
     - '**/*.md'
     - 'upstream/*.json'
+    - '.github/workflows/test-sign.yml'
   pull_request:
     branches: [ main ]
     paths-ignore:
     - '**/*.md'
+    - '.github/workflows/test-sign.yml'
 
 permissions:
   contents: write

@@ -19,10 +19,12 @@ on:
     paths-ignore:
     - '**/*.md'
     - 'upstream/*.json'
+    - '.github/workflows/test-sign.yml'
   pull_request:
     branches: [ insider ]
     paths-ignore:
     - '**/*.md'
+    - '.github/workflows/test-sign.yml'
 
 env:
   APP_NAME: VSCodium
