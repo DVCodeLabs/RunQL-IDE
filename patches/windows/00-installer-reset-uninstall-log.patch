@@ -1,0 +1,144 @@
+diff --git a/build/win32/code.iss b/build/win32/code.iss
+index 918f6281..b7b92d5a 100644
+--- a/build/win32/code.iss
++++ b/build/win32/code.iss
+@@ -1322,6 +1322,122 @@ begin
+   Result := '{#VersionedResourcesFolder}' <> '';
+ end;
+ 
++// --- unins000.dat overflow mitigation ---
++//
++// Silent background updates append records to unins000.dat every time.
++// Under Inno Setup 6.4.x, when the log's internal Int32 offsets exceed
++// ~2 GB, the next append throws "Internal error: EndOffset range exceeded"
++// and Setup rolls back, leaving users unable to update via the built-in
++// updater or the setup .exe.
++//
++// Strategy: at ssInstall (past the point where Setup can bail out for
++// admin-check / arch-check / cancel / PrepareToInstall errors, and where
++// {app} is guaranteed resolved), first recover from any stale backup
++// left by a previously crashed Setup, then rename unins000.dat/.msg
++// aside to .bak if the log is too large. If install reaches ssDone the
++// .bak is discarded; if not, DeinitializeSetup restores the .bak so
++// the existing install remains uninstallable/updatable. Nothing runs
++// from InitializeSetup — {app} is not reliably resolved there, and
++// ExpandConstant('{app}') can raise before the wizard confirms the
++// destination.
++//
++// Tradeoff of the reset itself: a subsequent Uninstall may leave a few
++// HKCU\Software\Classes entries from prior installs behind — acceptable
++// vs. becoming un-updatable.
++//
++// Requires Inno Setup 5.6+ (FileSize64) and 6.0+ (IntToStr64).
++
++var
++  GUninstallLogBackupMade: Boolean;
++
++procedure RecoverUninstallLogBackupIfStale();
++var
++  LogDat, LogMsg, BackupDat, BackupMsg: String;
++begin
++  LogDat := ExpandConstant('{app}\unins000.dat');
++  LogMsg := ExpandConstant('{app}\unins000.msg');
++  BackupDat := LogDat + '.bak';
++  BackupMsg := LogMsg + '.bak';
++  // Existence of .bak proves a prior Setup made a backup but never
++  // reached ssDone (which deletes it) nor DeinitializeSetup (which
++  // restores it) — i.e., it crashed hard between those points. The
++  // primary unins000.dat is either missing or partial; discard and
++  // restore from backup.
++  if FileExists(BackupDat) then begin
++    Log('Found stale ' + BackupDat + ' from a previously crashed Setup; restoring.');
++    DeleteFile(LogDat);
++    DeleteFile(LogMsg);
++    RenameFile(BackupDat, LogDat);
++    RenameFile(BackupMsg, LogMsg);
++  end;
++end;
++
++procedure BackupUninstallLogIfTooLarge();
++var
++  LogDat, LogMsg, BackupDat, BackupMsg: String;
++  LogSize: Int64;
++  ThresholdBytes: Int64;
++begin
++  GUninstallLogBackupMade := False;
++  LogDat := ExpandConstant('{app}\unins000.dat');
++  LogMsg := ExpandConstant('{app}\unins000.msg');
++  BackupDat := LogDat + '.bak';
++  BackupMsg := LogMsg + '.bak';
++  ThresholdBytes := Int64(500) * 1024 * 1024;
++  if not FileExists(LogDat) then
++    Exit;
++  if not FileSize64(LogDat, LogSize) then
++    Exit;
++  if LogSize <= ThresholdBytes then
++    Exit;
++  Log('unins000.dat is ' + IntToStr64(LogSize) + ' bytes (> 500 MB); moving aside to avoid EndOffset overflow.');
++  // Clear any residue from an earlier aborted attempt before renaming.
++  DeleteFile(BackupDat);
++  DeleteFile(BackupMsg);
++  if RenameFile(LogDat, BackupDat) then begin
++    RenameFile(LogMsg, BackupMsg);
++    GUninstallLogBackupMade := True;
++  end else begin
++    Log('Failed to rename unins000.dat to backup; install will proceed and may fail with EndOffset.');
++  end;
++end;
++
++procedure DiscardUninstallLogBackupOnSuccess();
++begin
++  if not GUninstallLogBackupMade then
++    Exit;
++  DeleteFile(ExpandConstant('{app}\unins000.dat.bak'));
++  DeleteFile(ExpandConstant('{app}\unins000.msg.bak'));
++  GUninstallLogBackupMade := False;
++  Log('Install reached ssDone; discarded previous uninstall log backup.');
++end;
++
++procedure RestoreUninstallLogBackupIfUnclaimed();
++var
++  LogDat, LogMsg, BackupDat, BackupMsg: String;
++begin
++  if not GUninstallLogBackupMade then
++    Exit;
++  LogDat := ExpandConstant('{app}\unins000.dat');
++  LogMsg := ExpandConstant('{app}\unins000.msg');
++  BackupDat := LogDat + '.bak';
++  BackupMsg := LogMsg + '.bak';
++  Log('Install did not reach ssDone; restoring previous uninstall log from ' + BackupDat + '.');
++  // Delete any partial new log Setup started writing before it aborted.
++  DeleteFile(LogDat);
++  DeleteFile(LogMsg);
++  RenameFile(BackupDat, LogDat);
++  RenameFile(BackupMsg, LogMsg);
++  GUninstallLogBackupMade := False;
++end;
++
++procedure DeinitializeSetup();
++begin
++  RestoreUninstallLogBackupIfUnclaimed();
++end;
++
++// --- end unins000.dat overflow mitigation ---
++
+ // Don't allow installing conflicting architectures
+ function InitializeSetup(): Boolean;
+ var
+@@ -1770,6 +1886,16 @@ var
+   UpdateResultCode: Integer;
+ 	StartServiceResultCode: Integer;
+ begin
++  if CurStep = ssInstall then begin
++    // Recover before backing up so a stale .bak from a previously
++    // crashed Setup doesn't get overwritten by our new rename.
++    RecoverUninstallLogBackupIfStale();
++    BackupUninstallLogIfTooLarge();
++  end;
++  if CurStep = ssDone then begin
++    DiscardUninstallLogBackupOnSuccess();
++  end;
++
+   if CurStep = ssPostInstall then
+   begin
+     LogContextMenuInstallState();
