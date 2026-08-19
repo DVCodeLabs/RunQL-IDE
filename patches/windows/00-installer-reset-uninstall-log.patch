@@ -29,7 +29,7 @@ index 918f6281..b7b92d5a 100644
 +// HKCU\Software\Classes entries from prior installs behind — acceptable
 +// vs. becoming un-updatable.
 +//
-+// Requires Inno Setup 5.6+ (FileSize64) and 6.0+ (IntToStr64).
++// Requires Inno Setup 5.6+ (FileSize64).
 +
 +var
 +  GUninstallLogBackupMade: Boolean;
@@ -74,7 +74,7 @@ index 918f6281..b7b92d5a 100644
 +    Exit;
 +  if LogSize <= ThresholdBytes then
 +    Exit;
-+  Log('unins000.dat is ' + IntToStr64(LogSize) + ' bytes (> 500 MB); moving aside to avoid EndOffset overflow.');
++  Log('unins000.dat is larger than 500 MB; moving aside to avoid EndOffset overflow.');
 +  // Clear any residue from an earlier aborted attempt before renaming.
 +  DeleteFile(BackupDat);
 +  DeleteFile(BackupMsg);
