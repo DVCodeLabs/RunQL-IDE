@@ -5,10 +5,10 @@ diff --git a/build/win32/code.iss b/build/win32/code.iss
  AppId={#AppId}
  AppName={#NameLong}
  AppVerName={#NameVersion}
--AppPublisher=VSCodium
--AppPublisherURL=https://vscodium.com/
--AppSupportURL=https://vscodium.com/
--AppUpdatesURL=https://vscodium.com/
+-AppPublisher=Microsoft Corporation
+-AppPublisherURL=https://code.visualstudio.com/
+-AppSupportURL=https://code.visualstudio.com/
+-AppUpdatesURL=https://code.visualstudio.com/
 +AppPublisher=RunQL
 +AppPublisherURL=https://runql.com/
 +AppSupportURL=https://runql.com/

@@ -42,7 +42,7 @@ Expect conflicts in `prepare_vscode.sh`, `build/` scripts, and `get_repo.sh`. Fo
 - Keep our RunQL-specific values where they use `${APP_NAME}` or other variables
 - If upstream hardcoded "VSCodium" in a new spot, use the appropriate variable instead
 
-> **Watch for:** `prepare_vscode.sh` has sed commands that replace "Microsoft" with "VSCodium" in `code.iss`. We carry a *patch* that then replaces "VSCodium" with "RunQL". If upstream changes the sed, verify our patch still targets the correct text.
+> **Watch for:** Our branding patch (`00-installer-runql-branding`) targets the original Microsoft values in `code.iss` directly. It applies *before* the VSCodium sed commands run, making those seds harmless no-ops. If upstream changes the publisher or URL lines in `code.iss`, verify our patch context still matches.
 
 ### 3. Test that patches still apply
 
@@ -102,7 +102,7 @@ Applied on all platforms.
 
 | Patch | What it does |
 |-------|-------------|
-| `00-installer-runql-branding` | Replaces "VSCodium" publisher and URLs with "RunQL" / runql.com in `code.iss`. Targets the post-sed state (after `prepare_vscode.sh` already replaced Microsoft → VSCodium). |
+| `00-installer-runql-branding` | Replaces "Microsoft Corporation" publisher and `code.visualstudio.com` URLs with "RunQL" / `runql.com` in `code.iss`. Targets the pre-sed state (the original Microsoft values). The sed commands in `prepare_vscode.sh` that later replace Microsoft → VSCodium become no-ops since the patch already changed those lines. |
 | `00-installer-reset-uninstall-log` | Mitigates Inno Setup `unins000.dat` overflow. Backs up and resets the uninstall log when it exceeds 500 MB to prevent "EndOffset range exceeded" errors during silent background updates. |
 | `00-update-prevent-duplicate-installer` | Prevents a race condition where a second Inno Setup installer spawns while one is already running. Checks the `runqlidesetup` mutex before launching. |
 
@@ -110,7 +110,7 @@ Applied on all platforms.
 
 **Don't rename VSCodium infrastructure.** Files named `vscodium.wxs`, `vscodium.wixobj`, container images like `vscodium/vscodium-linux-build-agent` — these are build plumbing. Renaming them to "runql" breaks upstream merges for zero user-facing benefit.
 
-**Branding patch depends on sed ordering.** The `00-installer-runql-branding.patch` assumes `prepare_vscode.sh` has already run its sed to replace "Microsoft Corporation" with "VSCodium". If upstream changes or removes that sed, the patch context won't match. Check `prepare_vscode.sh` lines 296–299 after each merge.
+**Branding patch targets the original Microsoft values.** The `00-installer-runql-branding.patch` replaces "Microsoft Corporation" and `code.visualstudio.com` directly (the pre-sed state), making the later VSCodium sed commands in `prepare_vscode.sh` harmless no-ops. If upstream changes the original publisher or URL lines in `code.iss`, the patch context may need updating.
 
 **Patches apply in alphabetical order.** The `00-` prefix runs before `11-`, etc. If you add a new patch, name it so it applies after any patches it depends on.
 
