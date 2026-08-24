@@ -1,0 +1,41 @@
+diff --git a/src/vs/platform/update/electron-main/updateService.win32.ts b/src/vs/platform/update/electron-main/updateService.win32.ts
+--- a/src/vs/platform/update/electron-main/updateService.win32.ts
++++ b/src/vs/platform/update/electron-main/updateService.win32.ts
+@@ -150,8 +150,13 @@
+ 				this.logService.info(`update#doCheckForUpdates - application was updating to version ${updatingVersion}`);
+ 				const updatePackagePath = await this.getUpdatePackagePath(updatingVersion, updateType);
+ 				if (await pfs.Promises.exists(updatePackagePath)) {
+-					await this._applySpecificUpdate(updatePackagePath, updatingVersion);
+-					this.logService.info(`update#doCheckForUpdates - successfully applied update to version ${updatingVersion}`);
++					const mutexModule = await import('@vscode/windows-mutex');
++					if (mutexModule.isActive(`${this.productService.win32MutexName}setup`)) {
++						this.logService.info('update#postInitialize - installer already running from previous session, skipping');
++					} else {
++						await this._applySpecificUpdate(updatePackagePath, updatingVersion);
++						this.logService.info(`update#doCheckForUpdates - successfully applied update to version ${updatingVersion}`);
++					}
+ 				}
+ 			} catch (e) {
+ 				this.logService.error(`update#doCheckForUpdates - could not read ${updatingVersionPath}`, e);
+@@ -376,6 +381,13 @@
+
+ 		await pfs.Promises.writeFile(this.availableUpdate.updateFilePath, 'flag');
+
++		const mutex = await import('@vscode/windows-mutex');
++		if (mutex.isActive(`${this.productService.win32MutexName}setup`)) {
++			this.logService.info('update#doApplyUpdate - installer already running, skipping');
++			this.setState(State.Idle(getUpdateType()));
++			return;
++		}
++
+ 		let child: ChildProcess
+
+ 		const type = getUpdateType();
+@@ -418,7 +430,6 @@
+ 		});
+
+ 		const readyMutexName = `${this.productService.win32MutexName}-ready`;
+-		const mutex = await import('@vscode/windows-mutex');
+
+ 		this.updateCancellationTokenSource?.dispose(true);
+ 		const cts = this.updateCancellationTokenSource = new CancellationTokenSource();
