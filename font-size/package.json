@@ -24,7 +24,7 @@
 	"devDependencies": {
 		"@types/node": "^22.9.0",
 		"fixpack": "^4.0.0",
-		"xo": "0.60.0"
+		"xo": "5.0.1"
 	},
 	"keywords": []
 }
